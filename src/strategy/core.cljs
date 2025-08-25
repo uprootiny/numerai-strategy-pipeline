@@ -16,16 +16,18 @@
            :filters {:rules #{} :tags #{}}
            :selected-projects #{}}))
 
-;; Project data in EDN format
+;; Real project data reflecting actual uprootiny.dev ecosystem
 (def initial-projects
-  [{:id "reflector" :name "Process Monitor" :status :deployed :priority :high :progress 100 :tags #{:monitoring :system}}
-   {:id "strategy" :name "Strategy Dashboard" :status :in-progress :priority :high :progress 80 :tags #{:management :ui}}
-   {:id "chat" :name "Chat Interface" :status :deployed :priority :medium :progress 100 :tags #{:communication :ai}}
-   {:id "decisions" :name "Decision Matrix" :status :testing :priority :medium :progress 90 :tags #{:analysis :decision}}
-   {:id "graph" :name "Graph Canvas" :status :deployed :priority :high :progress 100 :tags #{:visualization :network}}
+  [{:id "topoi" :name "TDA Mathematical Visualization" :status :in-progress :priority :high :progress 90 :tags #{:math :topology :elixir}}
+   {:id "strategy" :name "Strategy Dashboard" :status :in-progress :priority :high :progress 85 :tags #{:management :clojurescript}}
+   {:id "numerai" :name "Numerai TDA Integration" :status :in-progress :priority :high :progress 70 :tags #{:ml :topology :finance}}
+   {:id "graph" :name "Graph Canvas" :status :deployed :priority :medium :progress 100 :tags #{:visualization :network}}
    {:id "hyperstitious" :name "Art Showcase" :status :deployed :priority :medium :progress 100 :tags #{:art :creative}}
-   {:id "numerai" :name "ML Research" :status :backlog :priority :high :progress 20 :tags #{:ml :research}}
-   {:id "phoenix" :name "LiveView App" :status :backlog :priority :medium :progress 10 :tags #{:elixir :realtime}}])
+   {:id "cljs-revival" :name "CLJS Project Revival" :status :testing :priority :high :progress 60 :tags #{:clojurescript :infrastructure}}
+   {:id "electric-agents" :name "Electric Multi-Agent System" :status :backlog :priority :medium :progress 30 :tags #{:agents :clojure}}
+   {:id "post-mortem" :name "Project Post-Mortem Analysis" :status :backlog :priority :low :progress 10 :tags #{:analysis :cleanup}}
+   {:id "vessel-server" :name "Vessel Server" :status :needs-attention :priority :medium :progress 40 :tags #{:infrastructure :clojure}}
+   {:id "alpha-etudes" :name "Alpha Etudes" :status :needs-attention :priority :low :progress 25 :tags #{:experiments}}])
 
 ;; Initialize app state
 (swap! app-state assoc :projects initial-projects)
@@ -79,13 +81,45 @@
                         project)))
                   projects)))))
 
+;; TDA Analysis for project topology  
+(defn analyze-project-topology []
+  (let [projects (:projects @app-state)
+        project-graph (build-project-dependency-graph projects)
+        tda-metrics (compute-project-tda-metrics project-graph)]
+    (swap! app-state assoc :tda-analysis tda-metrics)
+    (add-notification (str "TDA Analysis: β₀=" (:betti-0 tda-metrics) " β₁=" (:betti-1 tda-metrics)) :info)))
+
+(defn build-project-dependency-graph [projects]
+  ;; Build adjacency matrix based on shared tags and dependencies
+  (let [project-ids (map :id projects)
+        adjacency-matrix (for [p1 projects]
+                          (for [p2 projects]
+                            (if (= p1 p2) 0
+                                (count (clojure.set/intersection (:tags p1) (:tags p2))))))]
+    {:nodes projects :adjacency adjacency-matrix}))
+
+(defn compute-project-tda-metrics [graph]
+  ;; Simplified TDA computation for project connectivity
+  (let [nodes (:nodes graph)
+        edges (count (filter #(> % 0) (flatten (:adjacency graph))))
+        components (estimate-connected-components graph)]
+    {:betti-0 components
+     :betti-1 (max 0 (- edges (count nodes) components -1))
+     :total-complexity (+ edges (* 2 components))
+     :clustering-coefficient (/ edges (max 1 (* (count nodes) (dec (count nodes)))))}))
+
+(defn estimate-connected-components [graph]
+  ;; Simplified connected component estimation
+  (max 1 (count (group-by :priority (:nodes graph)))))
+
 ;; Action handlers
 (defn toggle-stream []
   (swap! app-state update :stream-active not)
   (if (:stream-active @app-state)
     (do
       (add-notification "Stream mode activated" :info)
-      (js/setInterval fetch-system-data 3000))
+      (js/setInterval fetch-system-data 3000)
+      (js/setInterval analyze-project-topology 10000))
     (add-notification "Stream mode deactivated" :info)))
 
 (defn build-all []
@@ -126,6 +160,7 @@
     :in-progress "#007acc"
     :testing "#fbbf24"
     :backlog "#6b7280"
+    :needs-attention "#f87171"
     "#666"))
 
 (defn priority-color [priority]
@@ -223,6 +258,7 @@
    [:button.btn {:style {:width "100%" :margin-bottom "8px"} :on-click deploy-pending} "DEPLOY"]
    [:button.btn {:style {:width "100%" :margin-bottom "8px"} :on-click health-check} "CHECK"]
    [:button.btn {:style {:width "100%" :margin-bottom "8px"} :on-click #(js/window.open "http://graph.uprootiny.dev" "_blank")} "GRAPH"]
+   [:button.btn {:style {:width "100%" :margin-bottom "8px"} :on-click analyze-project-topology} "TDA ANALYZE"]
    [:button.btn {:style {:width "100%"} :on-click cascade-lifecycle} "CASCADE"]])
 
 (defn kanban-column [status projects]
@@ -253,13 +289,14 @@
 (defn kanban-view []
   [:div.kanban-board
    {:style {:display "grid"
-            :grid-template-columns "repeat(4, 1fr)"
+            :grid-template-columns "repeat(5, 1fr)"
             :gap "15px"
             :padding "20px"
             :height "100%"}}
    [kanban-column :backlog (:projects @app-state)]
    [kanban-column :in-progress (:projects @app-state)]
    [kanban-column :testing (:projects @app-state)]
+   [kanban-column :needs-attention (:projects @app-state)]
    [kanban-column :deployed (:projects @app-state)]])
 
 (defn gantt-view []
@@ -288,7 +325,9 @@
         total (count projects)
         deployed (count (filter #(= (:status %) :deployed) projects))
         in-progress (count (filter #(= (:status %) :in-progress) projects))
-        backlog (count (filter #(= (:status %) :backlog) projects))]
+        backlog (count (filter #(= (:status %) :backlog) projects))
+        needs-attention (count (filter #(= (:status %) :needs-attention) projects))
+        tda-analysis (:tda-analysis @app-state)]
     [:div.metrics-panel
      {:style {:display "grid"
               :grid-template-columns "repeat(auto-fit, minmax(100px, 1fr))"
@@ -305,8 +344,20 @@
       [:div.metric-value {:style {:font-size "20px" :font-weight "bold" :color "#007acc"}} in-progress]
       [:div.metric-label {:style {:font-size "11px" :color "#aaa" :margin-top "4px"}} "Active"]]
      [:div.metric {:style {:text-align "center" :padding "10px" :background "#333" :border-radius "4px"}}
+      [:div.metric-value {:style {:font-size "20px" :font-weight "bold" :color "#f87171"}} needs-attention]
+      [:div.metric-label {:style {:font-size "11px" :color "#aaa" :margin-top "4px"}} "Issues"]]
+     [:div.metric {:style {:text-align "center" :padding "10px" :background "#333" :border-radius "4px"}}
       [:div.metric-value {:style {:font-size "20px" :font-weight "bold" :color "#6b7280"}} backlog]
-      [:div.metric-label {:style {:font-size "11px" :color "#aaa" :margin-top "4px"}} "Queue"]]]))
+      [:div.metric-label {:style {:font-size "11px" :color "#aaa" :margin-top "4px"}} "Queue"]]
+     (when tda-analysis
+       [:div.metric {:style {:text-align "center" :padding "10px" :background "#333" :border-radius "4px"}}
+        [:div.metric-value {:style {:font-size "16px" :font-weight "bold" :color "#fbbf24"}} (str "β₀=" (:betti-0 tda-analysis))]
+        [:div.metric-label {:style {:font-size "11px" :color "#aaa" :margin-top "4px"}} "TDA β₀"]])
+     (when tda-analysis
+       [:div.metric {:style {:text-align "center" :padding "10px" :background "#333" :border-radius "4px"}}
+        [:div.metric-value {:style {:font-size "16px" :font-weight "bold" :color "#fbbf24"}} (str "β₁=" (:betti-1 tda-analysis))]
+        [:div.metric-label {:style {:font-size "11px" :color "#aaa" :margin-top "4px"}} "TDA β₁"]])
+     ]))
 
 (defn timeline-component []
   [:div.timeline-container

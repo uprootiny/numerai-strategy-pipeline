@@ -1,13 +1,14 @@
 (defproject strategy-dashboard "0.1.0"
   :description "Reactive strategy dashboard with ClojureScript"
-  :dependencies [[org.clojure/clojure "1.11.1"]
-                 [org.clojure/clojurescript "1.11.121"]
-                 [reagent "1.2.0"]
-                 [re-frame "1.3.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
+                 [org.clojure/clojurescript "1.10.520"]
+                 [reagent "0.10.0"]
+                 [re-frame "1.2.0"]
                  [hiccup "1.0.5"]
                  [cljs-ajax "0.8.4"]
                  [bidi "2.1.6"]
-                 [day8.re-frame/http-fx "0.2.4"]]
+                 [day8.re-frame/http-fx "0.2.4"]
+                 [com.andrewmcveigh/cljs-time "0.5.2"]]
   
   :plugins [[lein-cljsbuild "1.1.8"]
             [lein-figwheel "0.5.20"]]
