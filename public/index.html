@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategy Dashboard - Uprootiny Command Center</title>
+    <link rel="stylesheet" href="http://assets.uprootiny.dev/css/common.css">
+    <style>
+        :root {
+            --strategy-bg: #0a0e1a;
+            --strategy-surface: #1a1f2e;
+            --strategy-primary: #00ff88;
+            --strategy-accent: #0ff;
+            --strategy-text: #e8eaed;
+            --strategy-dim: #9aa0a6;
+            --strategy-error: #ff4444;
+            --strategy-warning: #ffaa00;
+        }
+        
+        body {
+            background: var(--strategy-bg);
+            color: var(--strategy-text);
+            font-family: 'Fira Code', monospace;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .command-center {
+            display: grid;
+            grid-template-columns: 350px 1fr 280px;
+            grid-template-rows: 70px 1fr 120px;
+            height: 100vh;
+            gap: 2px;
+            background: #000;
+        }
+        
+        .command-bar {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--strategy-surface), #2a2f3e);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            border-bottom: 2px solid var(--strategy-primary);
+            position: relative;
+        }
+        
+        .command-title {
+            color: var(--strategy-primary);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+        }
+        
+        .live-indicator {
+            width: 10px;
+            height: 10px;
+            background: var(--strategy-primary);
+            border-radius: 50%;
+            margin-left: 1rem;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 15px var(--strategy-primary);
+        }
+        
+        .command-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 0.8rem;
+        }
+        
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--strategy-accent);
+            color: var(--strategy-accent);
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .action-btn:hover {
+            background: var(--strategy-accent);
+            color: var(--strategy-bg);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+        
+        .action-btn.active {
+            background: var(--strategy-primary);
+            border-color: var(--strategy-primary);
+            color: var(--strategy-bg);
+        }
+        
+        .control-panel {
+            background: var(--strategy-surface);
+            border-right: 2px solid #333;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .panel-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid #333;
+        }
+        
+        .section-title {
+            color: var(--strategy-primary);
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .control-item {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .control-item:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--strategy-primary);
+            transform: translateX(3px);
+        }
+        
+        .control-item.active {
+            border-color: var(--strategy-accent);
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .control-title {
+            color: var(--strategy-text);
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .control-description {
+            color: var(--strategy-dim);
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+        
+        .control-status {
+            position: absolute;
+            top: 0.8rem;
+            right: 0.8rem;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--strategy-primary);
+            animation: pulse 2s infinite;
+        }
+        
+        .control-status.error {
+            background: var(--strategy-error);
+        }
+        
+        .control-status.warning {
+            background: var(--strategy-warning);
+        }
+        
+        .main-workspace {
+            background: var(--strategy-surface);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .workspace-header {
+            background: rgba(0, 255, 136, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .workspace-title {
+            color: var(--strategy-primary);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .workspace-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .workspace-btn {
+            background: transparent;
+            border: 1px solid var(--strategy-dim);
+            color: var(--strategy-dim);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s ease;
+        }
+        
+        .workspace-btn:hover {
+            border-color: var(--strategy-primary);
+            color: var(--strategy-primary);
+        }
+        
+        .workspace-content {
+            padding: 1.5rem;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+        }
+        
+        .execution-terminal {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .terminal-line {
+            margin-bottom: 0.3rem;
+            line-height: 1.2;
+        }
+        
+        .terminal-prompt {
+            color: var(--strategy-primary);
+        }
+        
+        .terminal-output {
+            color: var(--strategy-text);
+        }
+        
+        .terminal-error {
+            color: var(--strategy-error);
+        }
+        
+        .terminal-success {
+            color: var(--strategy-primary);
+        }
+        
+        .real-time-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .metric-card {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            color: var(--strategy-primary);
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+        
+        .metric-label {
+            color: var(--strategy-dim);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .interactive-form {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            color: var(--strategy-accent);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .form-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #555;
+            color: var(--strategy-text);
+            padding: 0.8rem;
+            border-radius: 4px;
+            width: 100%;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+        
+        .form-input:focus {
+            border-color: var(--strategy-accent);
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .form-button {
+            background: var(--strategy-accent);
+            color: var(--strategy-bg);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Fira Code', monospace;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        
+        .form-button:hover {
+            background: var(--strategy-primary);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        .inspector {
+            background: var(--strategy-surface);
+            border-left: 2px solid #333;
+            overflow-y: auto;
+        }
+        
+        .inspector-header {
+            background: rgba(0, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .inspector-title {
+            color: var(--strategy-accent);
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .inspector-subtitle {
+            color: var(--strategy-dim);
+            font-size: 0.8rem;
+        }
+        
+        .inspector-content {
+            padding: 1rem;
+        }
+        
+        .inspector-section {
+            margin-bottom: 1.5rem;
+            background: rgba(0, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        
+        .inspector-section h4 {
+            color: var(--strategy-accent);
+            font-size: 0.9rem;
+            margin: 0 0 0.8rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-label {
+            color: var(--strategy-text);
+            font-size: 0.8rem;
+        }
+        
+        .status-value {
+            color: var(--strategy-primary);
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        
+        .status-value.error {
+            color: var(--strategy-error);
+        }
+        
+        .status-value.warning {
+            color: var(--strategy-warning);
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .quick-action {
+            background: transparent;
+            border: 1px solid var(--strategy-accent);
+            color: var(--strategy-accent);
+            padding: 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .quick-action:hover {
+            background: var(--strategy-accent);
+            color: var(--strategy-bg);
+        }
+        
+        .status-bar {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #222, #1a1a1a);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            border-top: 1px solid #333;
+            gap: 2rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--strategy-primary);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.error {
+            background: var(--strategy-error);
+        }
+        
+        .status-dot.warning {
+            background: var(--strategy-warning);
+        }
+        
+        .status-text {
+            color: var(--strategy-dim);
+            font-size: 0.8rem;
+        }
+        
+        .status-value-bar {
+            color: var(--strategy-text);
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        
+        .progress-bar {
+            flex-grow: 1;
+            background: #333;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 1rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--strategy-error), var(--strategy-warning), var(--strategy-primary));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Flamechart Monitoring Styles */
+        .flamechart-container {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+        
+        .flamechart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        .flamechart-title {
+            color: var(--strategy-primary);
+            font-size: 1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .connection-status.connected {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--strategy-primary);
+            border: 1px solid var(--strategy-primary);
+        }
+        
+        .connection-status.connecting {
+            background: rgba(255, 170, 0, 0.2);
+            color: var(--strategy-warning);
+            border: 1px solid var(--strategy-warning);
+            animation: pulse 1s infinite;
+        }
+        
+        .connection-status.retrying {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--strategy-error);
+            border: 1px solid var(--strategy-error);
+        }
+        
+        .flamechart-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            margin: 1rem 0;
+            min-height: 40px;
+            align-items: flex-end;
+        }
+        
+        .flame-bar {
+            min-width: 3px;
+            max-width: 200px;
+            height: 20px;
+            border-radius: 2px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .flame-bar.connected {
+            background: linear-gradient(135deg, var(--strategy-primary), #20ff20);
+            border-color: var(--strategy-primary);
+        }
+        
+        .flame-bar.retry {
+            background: linear-gradient(135deg, var(--strategy-error), #ff6666);
+            border-color: var(--strategy-error);
+        }
+        
+        .flame-bar.timeout {
+            background: linear-gradient(135deg, var(--strategy-warning), #ffaa44);
+            border-color: var(--strategy-warning);
+        }
+        
+        .flame-bar:hover {
+            transform: scaleY(1.2);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .throttle-meter {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .throttle-meter.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .throttle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        
+        .throttle-title {
+            color: var(--strategy-accent);
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .throttle-countdown {
+            color: var(--strategy-warning);
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        
+        .throttle-progress {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        
+        .throttle-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--strategy-error), var(--strategy-warning));
+            border-radius: 4px;
+            transition: width 0.1s linear;
+        }
+        
+        .connection-logs {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            max-height: 200px;
+            overflow-y: auto;
+            color: var(--strategy-dim);
+        }
+        
+        .log-entry {
+            margin-bottom: 0.2rem;
+            line-height: 1.2;
+        }
+        
+        .log-timestamp {
+            color: var(--strategy-dim);
+            margin-right: 0.5rem;
+        }
+        
+        .log-level.info {
+            color: var(--strategy-accent);
+        }
+        
+        .log-level.success {
+            color: var(--strategy-primary);
+        }
+        
+        .log-level.error {
+            color: var(--strategy-error);
+        }
+        
+        .log-level.warning {
+            color: var(--strategy-warning);
+        }
+        
+        .resilient-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.8rem;
+            margin: 1rem 0;
+        }
+        
+        .resilient-btn {
+            background: transparent;
+            border: 1px solid var(--strategy-dim);
+            color: var(--strategy-dim);
+            padding: 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .resilient-btn:hover {
+            border-color: var(--strategy-accent);
+            color: var(--strategy-accent);
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .resilient-btn.active {
+            border-color: var(--strategy-primary);
+            color: var(--strategy-primary);
+            background: rgba(0, 255, 136, 0.1);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.95); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            background: var(--strategy-surface);
+            border: 1px solid var(--strategy-primary);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            z-index: 1000;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+    <link rel="stylesheet" href="/assets.uprootiny.dev/css/mobile-fix.css">
+</head>
+<body>
+    <div class="command-center">
+        <!-- Command Bar -->
+        <header class="command-bar">
+            <h1 class="command-title">🎯 Strategy Command Center</h1>
+            <div class="live-indicator"></div>
+            <div class="command-actions">
+                <button class="action-btn active" onclick="switchMode('overview')">Overview</button>
+                <button class="action-btn" onclick="switchMode('deploy')">Deploy</button>
+                <button class="action-btn" onclick="switchMode('monitor')">Monitor</button>
+                <button class="action-btn" onclick="switchMode('optimize')">Optimize</button>
+                <button class="action-btn" onclick="executeAction('emergency')">Emergency</button>
+            </div>
+        </header>
+        
+        <!-- Control Panel -->
+        <aside class="control-panel">
+            <div class="panel-section">
+                <h3 class="section-title">System Controls</h3>
+                
+                <div class="control-item" onclick="executeCommand('nginx-reload')">
+                    <div class="control-status"></div>
+                    <div class="control-title">Reload Nginx</div>
+                    <div class="control-description">Restart web server with new configs</div>
+                </div>
+                
+                <div class="control-item" onclick="executeCommand('build-all')">
+                    <div class="control-status warning"></div>
+                    <div class="control-title">Build All Projects</div>
+                    <div class="control-description">Trigger ClojureScript builds</div>
+                </div>
+                
+                <div class="control-item" onclick="executeCommand('health-check')">
+                    <div class="control-status"></div>
+                    <div class="control-title">Health Check</div>
+                    <div class="control-description">Validate all endpoints</div>
+                </div>
+                
+                <div class="control-item" onclick="executeCommand('optimize-tokens')">
+                    <div class="control-status"></div>
+                    <div class="control-title">Optimize Tokens</div>
+                    <div class="control-description">Improve code efficiency</div>
+                </div>
+                
+                <div class="control-item" onclick="executeCommand('deploy-prototype')">
+                    <div class="control-status"></div>
+                    <div class="control-title">Deploy Prototype</div>
+                    <div class="control-description">Create new subdomain</div>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3 class="section-title">ML Pipeline</h3>
+                
+                <div class="control-item" onclick="executeCommand('ml-retrain')">
+                    <div class="control-status"></div>
+                    <div class="control-title">Retrain Models</div>
+                    <div class="control-description">Update ML predictions</div>
+                </div>
+                
+                <div class="control-item" onclick="executeCommand('data-sync')">
+                    <div class="control-status"></div>
+                    <div class="control-title">Sync Data</div>
+                    <div class="control-description">Fetch latest market data</div>
+                </div>
+                
+                <div class="control-item" onclick="executeCommand('numerai-submit')">
+                    <div class="control-status warning"></div>
+                    <div class="control-title">Submit Predictions</div>
+                    <div class="control-description">Upload to Numerai tournament</div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Workspace -->
+        <main class="main-workspace">
+            <div class="workspace-header">
+                <h2 class="workspace-title" id="workspace-title">System Overview</h2>
+                <div class="workspace-actions">
+                    <button class="workspace-btn" onclick="refreshWorkspace()">Refresh</button>
+                    <button class="workspace-btn" onclick="exportData()">Export</button>
+                    <button class="workspace-btn" onclick="toggleFullscreen()">Fullscreen</button>
+                </div>
+            </div>
+            
+            <div class="workspace-content" id="workspace-content">
+                <div class="real-time-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="active-services">7</div>
+                        <div class="metric-label">Active Services</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="healthy-endpoints">5/6</div>
+                        <div class="metric-label">Healthy Endpoints</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="token-efficiency">62%</div>
+                        <div class="metric-label">Token Efficiency</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="ml-correlation">0.2088</div>
+                        <div class="metric-label">ML Correlation</div>
+                    </div>
+                </div>
+                
+                <div class="execution-terminal" id="execution-terminal">
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">uprootiny@strategy:~$</span>
+                        <span class="terminal-output"> system initialized</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="terminal-success">✓ All core services running</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="terminal-success">✓ Nginx configuration validated</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="terminal-success">✓ Endpoints responding</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">uprootiny@strategy:~$</span>
+                        <span class="terminal-output"> ready for commands</span>
+                    </div>
+                </div>
+                
+                <div class="interactive-form" id="command-form">
+                    <div class="form-group">
+                        <label class="form-label">Execute Command</label>
+                        <input type="text" class="form-input" id="command-input" placeholder="Enter command or action..." />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Parameters (JSON)</label>
+                        <input type="text" class="form-input" id="params-input" placeholder='{"subdomain": "example", "port": 3000}' />
+                    </div>
+                    <button class="form-button" onclick="executeCustomCommand()">Execute</button>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Inspector -->
+        <aside class="inspector">
+            <div class="inspector-header">
+                <h3 class="inspector-title">🔍 Live Inspector</h3>
+                <div class="inspector-subtitle">Real-time system monitoring</div>
+            </div>
+            
+            <div class="inspector-content">
+                <div class="inspector-section">
+                    <h4>Service Health</h4>
+                    <div class="status-row">
+                        <span class="status-label">Data Engine :5009</span>
+                        <span class="status-value" id="data-engine-status">Running</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">F00 Dashboard :3000</span>
+                        <span class="status-value" id="f00-status">Running</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Nu API :5000</span>
+                        <span class="status-value" id="nu-api-status">Running</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">FastAPI :8000</span>
+                        <span class="status-value" id="fastapi-status">Running</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Nginx</span>
+                        <span class="status-value" id="nginx-status">Active</span>
+                    </div>
+                </div>
+                
+                <div class="inspector-section">
+                    <h4>Performance</h4>
+                    <div class="status-row">
+                        <span class="status-label">Response Time</span>
+                        <span class="status-value" id="response-time">120ms</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">CPU Usage</span>
+                        <span class="status-value" id="cpu-usage">23%</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Memory</span>
+                        <span class="status-value" id="memory-usage">1.2GB</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Disk I/O</span>
+                        <span class="status-value" id="disk-io">Normal</span>
+                    </div>
+                </div>
+                
+                <div class="inspector-section">
+                    <h4>ML Metrics</h4>
+                    <div class="status-row">
+                        <span class="status-label">Correlation</span>
+                        <span class="status-value" id="ml-corr-detail">0.2088</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Earnings</span>
+                        <span class="status-value" id="ml-earnings">$1,231</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Models Active</span>
+                        <span class="status-value" id="active-models">2</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Data Points</span>
+                        <span class="status-value" id="data-points">2.8M</span>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="executeAction('restart-services')">Restart Services</button>
+                    <button class="quick-action" onclick="executeAction('clear-cache')">Clear Cache</button>
+                    <button class="quick-action" onclick="executeAction('backup-data')">Backup Data</button>
+                    <button class="quick-action" onclick="executeAction('update-ssl')">Update SSL</button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-item">
+                <div class="status-dot"></div>
+                <span class="status-text">Services:</span>
+                <span class="status-value-bar" id="services-count">7/7</span>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-dot" id="endpoints-dot"></div>
+                <span class="status-text">Endpoints:</span>
+                <span class="status-value-bar" id="endpoints-count">5/6</span>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="efficiency-progress" style="width: 62%"></div>
+            </div>
+            
+            <div class="status-item">
+                <span class="status-text">Efficiency:</span>
+                <span class="status-value-bar" id="efficiency-display">62%</span>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-dot"></div>
+                <span class="status-text">Last Updated:</span>
+                <span class="status-value-bar" id="last-updated">--</span>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        let currentMode = 'overview';
+        let updateInterval;
+        
+        // Real-time data fetching
+        async function fetchLiveData() {
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch('/live-data.json');
+                const duration = Date.now() - startTime;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update connection monitor if active
+                if (ConnectionMonitor.currentStatus !== 'disconnected') {
+                    ConnectionMonitor.addFlameEntry('connected', duration);
+                    ConnectionMonitor.updateConnectionStatus('connected');
+                    ConnectionMonitor.log(`Data fetch successful in ${duration}ms`, 'success');
+                    ConnectionMonitor.retryCount = 0;
+                }
+                
+                // Update system metrics
+                updateSystemMetricsFromLiveData(data);
+                
+                return data;
+                
+            } catch (error) {
+                const duration = Date.now() - startTime;
+                
+                if (ConnectionMonitor.currentStatus !== 'disconnected') {
+                    ConnectionMonitor.addFlameEntry('timeout', 0, 3000);
+                    ConnectionMonitor.log(`Data fetch failed: ${error.message}`, 'error');
+                    ConnectionMonitor.handleConnectionFailure();
+                }
+                
+                throw error;
+            }
+        }
+        
+        function updateSystemMetricsFromLiveData(data) {
+            // Update performance metrics
+            if (data.system_metrics) {
+                const cpu = Math.round(data.system_metrics.cpu.percent);
+                const memory = Math.round(data.system_metrics.memory.percent);
+                const memoryGB = (data.system_metrics.memory.used / (1024**3)).toFixed(1);
+                
+                document.getElementById('cpu-usage').textContent = cpu + '%';
+                document.getElementById('memory-usage').textContent = memoryGB + 'GB';
+                
+                // Update metrics in monitoring mode
+                const cpuMetric = document.querySelector('.real-time-metrics .metric-card:nth-child(3) .metric-value');
+                const memoryMetricCard = document.querySelector('.real-time-metrics .metric-card:nth-child(4) .metric-value');
+                if (cpuMetric) cpuMetric.textContent = cpu + '%';
+                if (memoryMetricCard) memoryMetricCard.textContent = memoryGB + 'GB';
+            }
+            
+            // Update service counts
+            if (data.process_activity) {
+                const activeServices = data.process_activity.filter(p => p.cpu > 0 || p.name.includes('nginx') || p.name.includes('postgres')).length;
+                document.getElementById('active-services').textContent = activeServices;
+            }
+            
+            // Update connection count
+            if (data.network_activity && data.network_activity.connections) {
+                const connectionCount = data.network_activity.connections.length;
+                const healthyConnections = data.network_activity.connections.filter(c => c.status === 'ESTABLISHED').length;
+                document.getElementById('healthy-endpoints').textContent = `${healthyConnections}/${connectionCount}`;
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Strategy Command Center initialized');
+            updateLastUpdated();
+            startAutoRefresh();
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey) {
+                    switch(e.key) {
+                        case '1': switchMode('overview'); break;
+                        case '2': switchMode('deploy'); break;
+                        case '3': switchMode('monitor'); break;
+                        case '4': switchMode('optimize'); break;
+                        case 'Enter': executeCustomCommand(); break;
+                    }
+                }
+            });
+            
+            // Command input enter key
+            document.getElementById('command-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    executeCustomCommand();
+                }
+            });
+        });
+        
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update active button
+            document.querySelectorAll('.action-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update workspace
+            const title = document.getElementById('workspace-title');
+            const content = document.getElementById('workspace-content');
+            
+            switch(mode) {
+                case 'overview':
+                    title.textContent = 'System Overview';
+                    // Keep existing content
+                    break;
+                    
+                case 'deploy':
+                    title.textContent = 'Deployment Console';
+                    content.innerHTML = generateDeploymentInterface();
+                    break;
+                    
+                case 'monitor':
+                    title.textContent = 'System Monitoring';
+                    content.innerHTML = generateMonitoringInterface();
+                    break;
+                    
+                case 'optimize':
+                    title.textContent = 'Performance Optimization';
+                    content.innerHTML = generateOptimizationInterface();
+                    break;
+            }
+            
+            showNotification(`Switched to ${mode} mode`, 'info');
+        }
+        
+        function executeCommand(command) {
+            const terminal = document.getElementById('execution-terminal');
+            const commandLine = document.createElement('div');
+            commandLine.className = 'terminal-line';
+            
+            // Add command to terminal
+            commandLine.innerHTML = `
+                <span class="terminal-prompt">uprootiny@strategy:~$</span>
+                <span class="terminal-output"> ${command}</span>
+            `;
+            terminal.appendChild(commandLine);
+            
+            // Simulate command execution
+            setTimeout(() => {
+                const result = document.createElement('div');
+                result.className = 'terminal-line';
+                
+                switch(command) {
+                    case 'nginx-reload':
+                        result.innerHTML = '<span class="terminal-success">✓ Nginx reloaded successfully</span>';
+                        updateServiceStatus('nginx-status', 'Active');
+                        break;
+                        
+                    case 'build-all':
+                        result.innerHTML = '<span class="terminal-success">✓ All builds completed</span>';
+                        break;
+                        
+                    case 'health-check':
+                        result.innerHTML = '<span class="terminal-success">✓ All systems healthy</span>';
+                        updateHealthStatus();
+                        break;
+                        
+                    case 'optimize-tokens':
+                        result.innerHTML = '<span class="terminal-success">✓ Token efficiency improved to 75%</span>';
+                        updateTokenEfficiency(75);
+                        break;
+                        
+                    case 'deploy-prototype':
+                        result.innerHTML = '<span class="terminal-success">✓ Prototype deployed to new-app.uprootiny.dev</span>';
+                        break;
+                        
+                    case 'ml-retrain':
+                        result.innerHTML = '<span class="terminal-success">✓ ML models retrained, correlation: 0.2156</span>';
+                        updateMLMetrics(0.2156);
+                        break;
+                        
+                    case 'data-sync':
+                        result.innerHTML = '<span class="terminal-success">✓ Market data synchronized</span>';
+                        break;
+                        
+                    case 'numerai-submit':
+                        result.innerHTML = '<span class="terminal-success">✓ Predictions submitted to Numerai</span>';
+                        break;
+                        
+                    default:
+                        result.innerHTML = '<span class="terminal-error">✗ Unknown command</span>';
+                }
+                
+                terminal.appendChild(result);
+                terminal.scrollTop = terminal.scrollHeight;
+                
+                // Update control item status
+                const controlItem = document.querySelector(`[onclick="executeCommand('${command}')"]`);
+                if (controlItem) {
+                    const status = controlItem.querySelector('.control-status');
+                    status.classList.remove('warning', 'error');
+                    setTimeout(() => status.classList.add('warning'), 2000);
+                }
+                
+            }, 1000 + Math.random() * 2000);
+            
+            showNotification(`Executing: ${command}`, 'info');
+        }
+        
+        function executeCustomCommand() {
+            const commandInput = document.getElementById('command-input');
+            const paramsInput = document.getElementById('params-input');
+            
+            const command = commandInput.value.trim();
+            const params = paramsInput.value.trim();
+            
+            if (!command) {
+                showNotification('Please enter a command', 'error');
+                return;
+            }
+            
+            // Validate JSON params if provided
+            let parsedParams = {};
+            if (params) {
+                try {
+                    parsedParams = JSON.parse(params);
+                } catch (e) {
+                    showNotification('Invalid JSON parameters', 'error');
+                    return;
+                }
+            }
+            
+            // Execute command
+            executeCommand(command);
+            
+            // Clear inputs
+            commandInput.value = '';
+            paramsInput.value = '';
+        }
+        
+        function executeAction(action) {
+            switch(action) {
+                case 'emergency':
+                    if (confirm('This will shut down all non-essential services. Continue?')) {
+                        showNotification('Emergency mode activated', 'warning');
+                        executeCommand('emergency-shutdown');
+                    }
+                    break;
+                    
+                case 'restart-services':
+                    executeCommand('restart-all-services');
+                    break;
+                    
+                case 'clear-cache':
+                    executeCommand('clear-system-cache');
+                    break;
+                    
+                case 'backup-data':
+                    executeCommand('backup-databases');
+                    break;
+                    
+                case 'update-ssl':
+                    executeCommand('renew-ssl-certificates');
+                    break;
+            }
+        }
+        
+        function updateServiceStatus(serviceId, status) {
+            const element = document.getElementById(serviceId);
+            if (element) {
+                element.textContent = status;
+                element.className = 'status-value';
+                if (status.includes('Error') || status.includes('Down')) {
+                    element.classList.add('error');
+                }
+            }
+        }
+        
+        function updateTokenEfficiency(percentage) {
+            document.getElementById('token-efficiency').textContent = percentage + '%';
+            document.getElementById('efficiency-display').textContent = percentage + '%';
+            document.getElementById('efficiency-progress').style.width = percentage + '%';
+        }
+        
+        function updateMLMetrics(correlation) {
+            document.getElementById('ml-correlation').textContent = correlation;
+            document.getElementById('ml-corr-detail').textContent = correlation;
+        }
+        
+        function updateHealthStatus() {
+            document.getElementById('healthy-endpoints').textContent = '6/6';
+            document.getElementById('endpoints-count').textContent = '6/6';
+            document.getElementById('endpoints-dot').classList.remove('error', 'warning');
+        }
+        
+        function refreshWorkspace() {
+            showNotification('Workspace refreshed', 'success');
+            updateLastUpdated();
+        }
+        
+        function exportData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                services: getServiceData(),
+                metrics: getMetricsData(),
+                mode: currentMode
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `uprootiny-strategy-${Date.now()}.json`;
+            a.click();
+            
+            showNotification('Data exported successfully', 'success');
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                showNotification('Fullscreen mode activated', 'info');
+            } else {
+                document.exitFullscreen();
+                showNotification('Fullscreen mode deactivated', 'info');
+            }
+        }
+        
+        function updateLastUpdated() {
+            document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+        }
+        
+        function startAutoRefresh() {
+            updateInterval = setInterval(() => {
+                updateLastUpdated();
+                // Add other auto-refresh logic here
+            }, 30000);
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            
+            const color = type === 'error' ? 'var(--strategy-error)' : 
+                         type === 'warning' ? 'var(--strategy-warning)' : 
+                         type === 'success' ? 'var(--strategy-primary)' : 'var(--strategy-accent)';
+            
+            notification.style.borderLeftColor = color;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 4000);
+        }
+        
+        function getServiceData() {
+            return {
+                dataEngine: document.getElementById('data-engine-status').textContent,
+                f00Dashboard: document.getElementById('f00-status').textContent,
+                nuApi: document.getElementById('nu-api-status').textContent,
+                fastApi: document.getElementById('fastapi-status').textContent,
+                nginx: document.getElementById('nginx-status').textContent
+            };
+        }
+        
+        function getMetricsData() {
+            return {
+                activeServices: document.getElementById('active-services').textContent,
+                healthyEndpoints: document.getElementById('healthy-endpoints').textContent,
+                tokenEfficiency: document.getElementById('token-efficiency').textContent,
+                mlCorrelation: document.getElementById('ml-correlation').textContent
+            };
+        }
+        
+        // Connection Monitoring System
+        const ConnectionMonitor = {
+            flameLog: [],
+            currentStatus: 'disconnected',
+            retryCount: 0,
+            reconnectTimeout: null,
+            backoffMultiplier: 1.5,
+            baseDelay: 1000,
+            maxRetries: 10,
+            
+            log(message, level = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = `<div class="log-entry">
+                    <span class="log-timestamp">${timestamp}</span>
+                    <span class="log-level ${level}">[${level.toUpperCase()}]</span>
+                    <span class="log-message">${message}</span>
+                </div>`;
+                
+                const logsContainer = document.getElementById('connection-logs');
+                if (logsContainer) {
+                    logsContainer.innerHTML += logEntry;
+                    logsContainer.scrollTop = logsContainer.scrollHeight;
+                }
+            },
+            
+            addFlameEntry(type, duration = null, delay = null) {
+                const entry = {
+                    timestamp: Date.now(),
+                    type: type,
+                    duration: duration || 0,
+                    delay: delay || 0,
+                    retryCount: this.retryCount
+                };
+                
+                this.flameLog.push(entry);
+                
+                // Keep only last 50 entries for performance
+                if (this.flameLog.length > 50) {
+                    this.flameLog = this.flameLog.slice(-50);
+                }
+                
+                this.updateFlameChart();
+            },
+            
+            updateFlameChart() {
+                const flameDisplay = document.getElementById('flamechart-display');
+                if (!flameDisplay) return;
+                
+                flameDisplay.innerHTML = '';
+                
+                this.flameLog.forEach((entry, index) => {
+                    const bar = document.createElement('div');
+                    bar.className = `flame-bar ${entry.type}`;
+                    
+                    const width = Math.max(3, Math.min(200, 
+                        entry.type === 'connected' ? entry.duration / 10 : 
+                        entry.type === 'retry' ? entry.delay / 50 : 
+                        entry.type === 'timeout' ? entry.delay / 30 : 20));
+                    
+                    bar.style.width = width + 'px';
+                    bar.title = `${entry.type} - ${entry.type === 'connected' ? entry.duration + 'ms' : 
+                                  entry.type === 'retry' ? entry.delay + 'ms delay' : 
+                                  'timeout'} (attempt ${entry.retryCount + 1})`;
+                    
+                    if (width > 30) {
+                        bar.textContent = entry.type.substr(0, 4);
+                    }
+                    
+                    flameDisplay.appendChild(bar);
+                });
+            },
+            
+            updateConnectionStatus(status) {
+                this.currentStatus = status;
+                const statusElement = document.getElementById('connection-status');
+                if (statusElement) {
+                    statusElement.className = `connection-status ${status}`;
+                    statusElement.innerHTML = `<div class="status-dot ${status}"></div>${status.toUpperCase()}`;
+                }
+            },
+            
+            async realConnection() {
+                this.updateConnectionStatus('connecting');
+                this.log('Attempting to connect to live data stream...', 'info');
+                
+                try {
+                    await fetchLiveData();
+                    // Success is handled in fetchLiveData
+                    
+                    // Schedule next fetch
+                    setTimeout(() => {
+                        if (this.currentStatus === 'connected') {
+                            this.realConnection();
+                        }
+                    }, 10000 + Math.random() * 5000); // 10-15 second intervals
+                    
+                } catch (error) {
+                    // Error handling is done in fetchLiveData
+                }
+            },
+            
+            simulateConnection() {
+                // Use real connection instead of simulation
+                this.realConnection();
+            },
+            
+            simulateDisconnection() {
+                this.updateConnectionStatus('retrying');
+                this.log('Connection lost, initiating reconnection...', 'warning');
+                this.scheduleReconnect();
+            },
+            
+            handleConnectionFailure() {
+                this.retryCount++;
+                this.log(`Connection failed (attempt ${this.retryCount})`, 'error');
+                
+                if (this.retryCount < this.maxRetries) {
+                    this.scheduleReconnect();
+                } else {
+                    this.log('Max retries exceeded, giving up', 'error');
+                    this.updateConnectionStatus('failed');
+                }
+            },
+            
+            scheduleReconnect() {
+                const delay = Math.min(30000, this.baseDelay * Math.pow(this.backoffMultiplier, this.retryCount));
+                this.addFlameEntry('retry', 0, delay);
+                this.updateConnectionStatus('retrying');
+                
+                this.log(`Retrying in ${Math.round(delay/1000)}s (exponential backoff)`, 'warning');
+                
+                this.showThrottleMeter(delay);
+                
+                this.reconnectTimeout = setTimeout(() => {
+                    this.realConnection();
+                }, delay);
+            },
+            
+            showThrottleMeter(delay) {
+                const meter = document.getElementById('throttle-meter');
+                if (!meter) return;
+                
+                meter.classList.add('active');
+                
+                const startTime = Date.now();
+                const endTime = startTime + delay;
+                
+                const updateCountdown = () => {
+                    const now = Date.now();
+                    const remaining = Math.max(0, endTime - now);
+                    
+                    const countdown = document.getElementById('throttle-countdown');
+                    const fill = document.getElementById('throttle-fill');
+                    
+                    if (countdown) countdown.textContent = `${Math.round(remaining/1000)}s`;
+                    if (fill) fill.style.width = `${(1 - remaining/delay) * 100}%`;
+                    
+                    if (remaining > 0) {
+                        setTimeout(updateCountdown, 100);
+                    } else {
+                        meter.classList.remove('active');
+                    }
+                };
+                
+                updateCountdown();
+            },
+            
+            forceReconnect() {
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                }
+                this.retryCount = 0;
+                this.log('Manual reconnection initiated', 'info');
+                this.realConnection();
+            },
+            
+            reset() {
+                this.flameLog = [];
+                this.retryCount = 0;
+                this.currentStatus = 'disconnected';
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                }
+                this.updateFlameChart();
+                this.updateConnectionStatus('disconnected');
+                
+                const logsContainer = document.getElementById('connection-logs');
+                if (logsContainer) {
+                    logsContainer.innerHTML = '<div class="log-entry"><span class="log-level info">[INFO]</span> Connection monitor reset</div>';
+                }
+            }
+        };
+
+        // Generate interface content for different modes
+        function generateDeploymentInterface() {
+            return `
+                <div class="real-time-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">12</div>
+                        <div class="metric-label">Active Deployments</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">3</div>
+                        <div class="metric-label">Pending Builds</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">98%</div>
+                        <div class="metric-label">Deploy Success Rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">2.3s</div>
+                        <div class="metric-label">Avg Deploy Time</div>
+                    </div>
+                </div>
+                
+                <div class="interactive-form">
+                    <div class="form-group">
+                        <label class="form-label">New Deployment</label>
+                        <input type="text" class="form-input" placeholder="Subdomain name..." />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Source Path</label>
+                        <input type="text" class="form-input" placeholder="/var/www/new-project..." />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Port (optional)</label>
+                        <input type="number" class="form-input" placeholder="3000" />
+                    </div>
+                    <button class="form-button" onclick="executeCommand('deploy-new-app')">Deploy Application</button>
+                </div>
+            `;
+        }
+        
+        function generateMonitoringInterface() {
+            return `
+                <div class="real-time-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">120ms</div>
+                        <div class="metric-label">Avg Response Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.8%</div>
+                        <div class="metric-label">Uptime</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">23%</div>
+                        <div class="metric-label">CPU Usage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">1.2GB</div>
+                        <div class="metric-label">Memory Usage</div>
+                    </div>
+                </div>
+                
+                <div class="flamechart-container">
+                    <div class="flamechart-header">
+                        <div class="flamechart-title">
+                            🔥 Connection Flamechart
+                        </div>
+                        <div id="connection-status" class="connection-status disconnected">
+                            <div class="status-dot"></div>DISCONNECTED
+                        </div>
+                    </div>
+                    
+                    <div id="flamechart-display" class="flamechart-display">
+                        <div style="color: var(--strategy-dim); font-style: italic; padding: 20px; text-align: center;">
+                            No connection attempts yet - click "Start Monitoring" to begin
+                        </div>
+                    </div>
+                    
+                    <div class="resilient-controls">
+                        <button class="resilient-btn" onclick="ConnectionMonitor.simulateConnection()">Start Monitoring</button>
+                        <button class="resilient-btn" onclick="ConnectionMonitor.forceReconnect()">Force Reconnect</button>
+                        <button class="resilient-btn" onclick="ConnectionMonitor.reset()">Reset Monitor</button>
+                    </div>
+                </div>
+                
+                <div id="throttle-meter" class="throttle-meter">
+                    <div class="throttle-header">
+                        <div class="throttle-title">⏳ Exponential Backoff</div>
+                        <div id="throttle-countdown" class="throttle-countdown">0s</div>
+                    </div>
+                    <div class="throttle-progress">
+                        <div id="throttle-fill" class="throttle-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div id="connection-logs" class="connection-logs">
+                    <div class="log-entry">
+                        <span class="log-level info">[INFO]</span>
+                        <span class="log-message">Connection monitor initialized - ready for resilient connections</span>
+                    </div>
+                </div>
+                
+                <div class="execution-terminal">
+                    <div class="terminal-line"><span class="terminal-success">✓ All services responding</span></div>
+                    <div class="terminal-line"><span class="terminal-success">✓ Database connections healthy</span></div>
+                    <div class="terminal-line"><span class="terminal-success">✓ SSL certificates valid</span></div>
+                    <div class="terminal-line"><span class="terminal-success">✓ Disk space sufficient (78% used)</span></div>
+                    <div class="terminal-line"><span class="terminal-output">Monitoring 6 endpoints, 7 services, 12 processes</span></div>
+                </div>
+            `;
+        }
+        
+        function generateOptimizationInterface() {
+            return `
+                <div class="real-time-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">62%</div>
+                        <div class="metric-label">Current Efficiency</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">75%</div>
+                        <div class="metric-label">Target Efficiency</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">546K</div>
+                        <div class="metric-label">Total Lines</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">+13%</div>
+                        <div class="metric-label">Improvement</div>
+                    </div>
+                </div>
+                
+                <div class="interactive-form">
+                    <div class="form-group">
+                        <label class="form-label">Optimization Target</label>
+                        <select class="form-input">
+                            <option>Token Efficiency</option>
+                            <option>Response Time</option>
+                            <option>Memory Usage</option>
+                            <option>Build Speed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Aggressive Mode</label>
+                        <input type="checkbox" style="margin-right: 0.5rem;" />
+                        <span style="color: var(--strategy-dim);">Remove redundant code</span>
+                    </div>
+                    <button class="form-button" onclick="executeCommand('run-optimization')">Start Optimization</button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

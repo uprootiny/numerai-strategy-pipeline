@@ -1,0 +1,7 @@
+{:paths ["src" "resources"]
+ :deps {org.clojure/clojure {:mvn/version "1.12.1"}
+        org.clojure/clojurescript {:mvn/version "1.11.60"}
+        reagent/reagent {:mvn/version "1.2.0"}
+        re-frame/re-frame {:mvn/version "1.4.2"}
+        cljs-ajax/cljs-ajax {:mvn/version "0.8.4"}
+        day8.re-frame/http-fx {:mvn/version "0.2.4"}}}

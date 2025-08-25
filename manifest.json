@@ -1,0 +1,36 @@
+{
+  "name": "strategy",
+  "version": "1.0.0",
+  "description": "Interactive web application for strategy",
+  "type": "interactive",
+  "port": 3002,
+  "domain": "strategy.uprootiny.dev",
+  "technologies": ["html", "css", "javascript"],
+  "apis": {
+    "health": "/api/health",
+    "rebuild": "/api/rebuild", 
+    "manifest": "/api/manifest"
+  },
+  "build": {
+    "script": "./build.sh",
+    "input": "src/",
+    "output": "public/",
+    "dependencies": []
+  },
+  "paramsets": {
+    "development": {
+      "debug": true,
+      "apiUrl": "http://localhost:5001"
+    },
+    "production": {
+      "debug": false,
+      "apiUrl": "https://uprootiny.dev/api"
+    }
+  },
+  "manifesto": "This project aims to...",
+  "repository": "https://github.com/user/strategy",
+  "status": "active|planned|deprecated",
+  "real_data": true,
+  "mobile_optimized": true,
+  "last_updated": "2025-07-19T13:30:00Z"
+}
