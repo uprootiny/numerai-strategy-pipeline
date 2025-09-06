@@ -1,0 +1,98 @@
+{
+  "start_time": "2025-09-07T01:47:16.761746",
+  "pipeline_version": "1.0.0-robust",
+  "results": {
+    "analytics": {
+      "total_submissions": 2,
+      "performance_metrics": {
+        "average_score": 0.86,
+        "best_score": 0.87,
+        "worst_score": 0.85,
+        "std_score": 0.014142135623730963
+      },
+      "dataframe": "  submission_id model_name  round  ...                   file score  rank\n0       sub_001  uprootiny    450  ...    test_submission.csv  0.85   120\n1       sub_002  uprootiny    451  ...  test_submission_2.csv  0.87    95\n\n[2 rows x 7 columns]",
+      "date_range": {
+        "min": "2025-09-06T23:23:13+02:00",
+        "max": "2025-09-06T23:23:22+02:00"
+      }
+    },
+    "indexing": {
+      "health_score": 100,
+      "health_status": "\ud83d\udc9a Excellent - Running like a dream!",
+      "indices": {
+        "total": 2,
+        "types": {
+          "btree": 0,
+          "hash": 1,
+          "bitmap": 1,
+          "spatial": 0,
+          "temporal": 0,
+          "composite": 0,
+          "inverted": 0
+        },
+        "names": [
+          "demo_hash",
+          "demo_bitmap"
+        ]
+      },
+      "performance": {
+        "total_queries": 0,
+        "recent_queries": 0,
+        "avg_recent_query_time": 0,
+        "memory_usage_mb": 0.0014257431030273438
+      },
+      "recommendations": [
+        "Everything looks great! Your indices are performing optimally \ud83c\udf89"
+      ]
+    },
+    "ml_predictions": {
+      "model_type": "uprootiny_ensemble",
+      "prediction_count": 100,
+      "prediction_stats": {
+        "min": 0.12363601648045959,
+        "max": 0.9571470240006846,
+        "mean": 0.46859613496241886,
+        "std": 0.16236463015530983
+      },
+      "ensemble_info": {
+        "models": [
+          "lightgbm",
+          "xgboost",
+          "random_forest",
+          "ridge",
+          "elastic_net"
+        ],
+        "weights": {
+          "lightgbm": 0.16454238798728935,
+          "xgboost": 0.19597191532596853,
+          "random_forest": 0.20090225861851368,
+          "ridge": 0.2730510662386266,
+          "elastic_net": 0.1655323718296017
+        },
+        "feature_count": 30
+      },
+      "polyglot_features": true,
+      "model_trained": true,
+      "timestamp": "2025-09-07T01:47:30.288155"
+    }
+  },
+  "health": {
+    "timestamp": "2025-09-07T01:47:30.289468",
+    "status": "healthy",
+    "metrics": {
+      "uptime_seconds": 13.528381109237671,
+      "memory_mb": 21.578125,
+      "cpu_percent": 0.0,
+      "errors_count": 0,
+      "warnings_count": 0,
+      "operations_count": 3
+    },
+    "resource_limits": {
+      "within_memory_limit": true,
+      "within_runtime_limit": true
+    }
+  },
+  "status": "completed",
+  "end_time": "2025-09-07T01:47:30.289551",
+  "total_runtime_seconds": 13.528457403182983
+}
