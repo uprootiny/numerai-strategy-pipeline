@@ -1,0 +1,8 @@
+{
+  "migration_timestamp": 1756995053.3139994,
+  "source_path": "/home/uprootiny/numerai-uprootiny",
+  "target_path": "/var/www/strategy.uprootiny.dev/numerai-pipeline",
+  "migrated_by": "numerai-pipeline-migrator",
+  "python_version": "Python 3.10.12",
+  "uv_version": "uv 0.6.2"
+}

@@ -1,0 +1,19 @@
+{
+  "backup_name": "full_state_20250906_140705",
+  "timestamp": "20250906_140705",
+  "backup_type": "full_state",
+  "files_included": [
+    "analytics/",
+    "indexing/", 
+    "tests/",
+    "*.py",
+    "*.toml",
+    "*.sh",
+    "*.json",
+    "*.conf"
+  ],
+  "git_commit": "65926cf5b5f56163cd745905c990fc2b32817cb3",
+  "git_branch": "master",
+  "coverage": "55.58%",
+  "test_status": "true"
+}

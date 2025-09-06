@@ -1,0 +1,17 @@
+2025-09-06 14:01:16,045 - RobustPipeline - INFO - 🚀 Starting full defensive pipeline...
+2025-09-06 14:01:16,045 - RobustPipeline - INFO - 🔍 Starting analytics pipeline...
+2025-09-06 14:01:18,151 - RobustPipeline - INFO - ✓ Analytics module loaded
+2025-09-06 14:01:18,190 - RobustPipeline - INFO - ✓ Indexing module loaded
+2025-09-06 14:01:19,057 - RobustPipeline - INFO - ✓ Model module loaded
+2025-09-06 14:01:19,059 - RobustPipeline - INFO - ✓ Backup created: backups/analytics_result_20250906_140119.json
+2025-09-06 14:01:19,059 - RobustPipeline - INFO - ✓ Analytics completed successfully
+2025-09-06 14:01:19,059 - RobustPipeline - INFO - 🗂️ Starting indexing demonstration...
+2025-09-06 14:01:19,059 - RobustPipeline - INFO - ✓ Analytics module loaded
+2025-09-06 14:01:19,059 - RobustPipeline - INFO - ✓ Indexing module loaded
+2025-09-06 14:01:19,059 - RobustPipeline - INFO - ✓ Model module loaded
+2025-09-06 14:01:19,077 - RobustPipeline - INFO - ✓ Backup created: backups/indexing_status_20250906_140119.json
+2025-09-06 14:01:19,078 - RobustPipeline - INFO - ✓ Indexing demo completed successfully
+2025-09-06 14:01:19,078 - RobustPipeline - INFO - ✅ Pipeline completed with status: completed
+2025-09-06 14:01:19,078 - RobustPipeline - INFO - ✓ Backup created: backups/pipeline_results_20250906_140119.json
+2025-09-06 14:01:19,078 - RobustPipeline - INFO - Initiating graceful shutdown (timeout: 10s)...
+2025-09-06 14:01:19,078 - RobustPipeline - INFO - ✓ Graceful shutdown completed

@@ -1,0 +1,29 @@
+{
+  "health_score": 100,
+  "health_status": "\ud83d\udc9a Excellent - Running like a dream!",
+  "indices": {
+    "total": 2,
+    "types": {
+      "btree": 0,
+      "hash": 1,
+      "bitmap": 1,
+      "spatial": 0,
+      "temporal": 0,
+      "composite": 0,
+      "inverted": 0
+    },
+    "names": [
+      "demo_hash",
+      "demo_bitmap"
+    ]
+  },
+  "performance": {
+    "total_queries": 0,
+    "recent_queries": 0,
+    "avg_recent_query_time": 0,
+    "memory_usage_mb": 0.0014247894287109375
+  },
+  "recommendations": [
+    "Everything looks great! Your indices are performing optimally \ud83c\udf89"
+  ]
+}

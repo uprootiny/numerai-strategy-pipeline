@@ -1,0 +1,30 @@
+{
+  "model_type": "uprootiny_ensemble",
+  "prediction_count": 100,
+  "prediction_stats": {
+    "min": 0.12363601648045967,
+    "max": 0.9571470240006846,
+    "mean": 0.4685961349624189,
+    "std": 0.16236463015530983
+  },
+  "ensemble_info": {
+    "models": [
+      "lightgbm",
+      "xgboost",
+      "random_forest",
+      "ridge",
+      "elastic_net"
+    ],
+    "weights": {
+      "lightgbm": 0.16454238798728935,
+      "xgboost": 0.19597191532596853,
+      "random_forest": 0.20090225861851368,
+      "ridge": 0.2730510662386266,
+      "elastic_net": 0.1655323718296017
+    },
+    "feature_count": 30
+  },
+  "polyglot_features": true,
+  "model_trained": true,
+  "timestamp": "2025-09-07T01:44:30.670070"
+}

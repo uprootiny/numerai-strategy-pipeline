@@ -1,0 +1,86 @@
+{
+  "service_name": "numerai-pipeline",
+  "version": "1.0.0-robust",
+  "location": "/var/www/strategy.uprootiny.dev/numerai-pipeline",
+  "server": "strategy.uprootiny.dev",
+  "port": 80,
+  "protocol": "http",
+  "endpoints": {
+    "analytics": {
+      "path": "/api/analytics",
+      "method": "GET",
+      "description": "Analyze submission history and performance metrics",
+      "rate_limit": "5 requests/minute"
+    },
+    "indexing": {
+      "path": "/api/indexing", 
+      "method": "GET",
+      "description": "High-performance data indexing and querying",
+      "rate_limit": "10 requests/minute"
+    },
+    "health": {
+      "path": "/health",
+      "method": "GET", 
+      "description": "Service health status",
+      "rate_limit": "unlimited"
+    },
+    "status": {
+      "path": "/status",
+      "method": "GET",
+      "description": "Deployment information and metrics",
+      "rate_limit": "unlimited"
+    },
+    "metrics": {
+      "path": "/metrics",
+      "method": "GET",
+      "description": "Service metrics (localhost only)",
+      "rate_limit": "unlimited",
+      "access": "restricted"
+    }
+  },
+  "health_check": {
+    "enabled": true,
+    "endpoint": "/health",
+    "interval": 60,
+    "timeout": 5
+  },
+  "monitoring": {
+    "logs": {
+      "access_log": "/var/log/nginx/numerai_strategy_access.log",
+      "error_log": "/var/log/nginx/numerai_strategy_error.log",
+      "pipeline_log": "logs/pipeline_*.log"
+    },
+    "metrics": {
+      "coverage": "55.58%",
+      "tests": 49,
+      "errors": 0,
+      "uptime_target": "99.9%"
+    }
+  },
+  "deployment": {
+    "method": "uv + python",
+    "test_command": "./run_tests.sh",
+    "deploy_command": "./simple_deploy.sh",
+    "production_command": "./robust_pipeline.py",
+    "backup_enabled": true,
+    "rollback_procedure": "./rollback.sh"
+  },
+  "dependencies": {
+    "python": "3.12.9",
+    "uv": "0.6.2",
+    "nginx": "enabled",
+    "git": "enabled"
+  },
+  "security": {
+    "rate_limiting": "enabled",
+    "cors": "enabled",
+    "security_headers": "enabled",
+    "access_control": "basic_auth_for_sensitive_endpoints"
+  },
+  "failover": {
+    "backup_servers": ["127.0.0.1:8081"],
+    "max_fails": 3,
+    "fail_timeout": "30s",
+    "graceful_shutdown": "10s"
+  }
+}

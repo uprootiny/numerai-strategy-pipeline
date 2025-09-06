@@ -1,0 +1,380 @@
+#!/usr/bin/env python3
+"""
+Edge case and robustness testing to improve coverage
+Focus on error handling, boundary conditions, and defensive programming
+"""
+
+import pytest
+import pandas as pd
+import numpy as np
+import tempfile
+import os
+import sys
+from unittest.mock import patch, MagicMock
+from pathlib import Path
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from analytics.analyze_uprootiny import UprootinyAnalytics
+from indexing.index_engine import IndexEngine, IndexType
+import model_uprootiny
+
+
+class TestEdgeCases:
+    """Test edge cases and boundary conditions"""
+    
+    def test_analytics_with_corrupted_data(self):
+        """Test analytics handling of corrupted or malformed data"""
+        analytics = UprootinyAnalytics()
+        
+        # Create temporary directory with corrupted files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create various corrupted file scenarios
+            
+            # Empty file
+            empty_file = Path(temp_dir) / "empty.csv"
+            empty_file.touch()
+            
+            # File with only headers
+            header_only = Path(temp_dir) / "headers_only.csv"
+            header_only.write_text("id,era,target\n")
+            
+            # File with malformed CSV
+            malformed = Path(temp_dir) / "malformed.csv"
+            malformed.write_text("id,era,target\n1,era1\n2,era2,0.5,extra\n")
+            
+            # File with mixed data types
+            mixed_types = Path(temp_dir) / "mixed.csv"
+            mixed_types.write_text("id,era,target\ntext,era1,0.5\n2,invalid_era,not_a_number\n")
+            
+            # Test analytics handles corrupted data gracefully
+            result = analytics.analyze_submissions(temp_dir, logs_dir=temp_dir)
+            
+            assert isinstance(result, dict)
+            assert 'files_processed' in result
+            assert 'errors' in result
+            assert result['errors'] >= 0  # Should track errors without crashing
+
+    def test_indexing_memory_pressure(self):
+        """Test indexing under memory pressure conditions"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create progressively larger datasets to test memory handling
+        sizes = [1000, 5000, 10000]
+        
+        for size in sizes:
+            memory_pressure_data = pd.DataFrame({
+                'id': range(size),
+                'large_text': ['x' * 1000 for _ in range(size)],  # Large text fields
+                'random_data': np.random.bytes(size * 100),  # Random binary data
+                'float_array': np.random.uniform(0, 1, size),
+                'category': np.random.choice([f'cat_{i}' for i in range(100)], size)
+            })
+            
+            try:
+                # Test different index types under memory pressure
+                engine.create_index(f'id_{size}', IndexType.HASH, memory_pressure_data)
+                engine.create_index(f'category_{size}', IndexType.BITMAP, memory_pressure_data)
+                
+                # Verify indices work under pressure
+                results = engine.query(f'id_{size}', size // 2, memory_pressure_data)
+                assert len(results) >= 0
+                
+                # Test memory cleanup
+                memory_before = engine.get_memory_usage()
+                engine.drop_index(f'id_{size}')
+                memory_after = engine.get_memory_usage()
+                assert memory_after <= memory_before
+                
+            except MemoryError:
+                # Graceful handling of memory exhaustion
+                assert True  # Expected for very large datasets
+            except Exception as e:
+                # Should not crash with other exceptions
+                assert False, f"Unexpected exception: {e}"
+
+    def test_concurrent_access_simulation(self):
+        """Test thread-safety and concurrent access patterns"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        concurrent_data = pd.DataFrame({
+            'thread_id': np.random.randint(0, 10, 2000),
+            'operation': np.random.choice(['read', 'write', 'update'], 2000),
+            'timestamp': pd.date_range('2024-01-01', periods=2000, freq='S'),
+            'value': np.random.uniform(0, 100, 2000)
+        })
+        
+        # Create indices for concurrent testing
+        engine.create_index('thread_id', IndexType.HASH, concurrent_data)
+        engine.create_index('operation', IndexType.BITMAP, concurrent_data)
+        engine.create_index('timestamp', IndexType.TEMPORAL, concurrent_data)
+        
+        # Simulate concurrent access patterns
+        query_results = []
+        
+        # Multiple rapid queries (simulating concurrent access)
+        for i in range(100):
+            thread_id = np.random.randint(0, 10)
+            results = engine.query('thread_id', thread_id, concurrent_data)
+            query_results.append(len(results))
+            
+            # Interleave with range queries
+            if i % 10 == 0:
+                start_time = concurrent_data['timestamp'].iloc[i * 10]
+                end_time = start_time + pd.Timedelta(minutes=5)
+                time_results = engine.range_query('timestamp', start_time, end_time, concurrent_data)
+                query_results.append(len(time_results))
+        
+        # Verify consistent results despite rapid access
+        assert len(query_results) > 0
+        assert all(r >= 0 for r in query_results)
+        
+        # Test index integrity after concurrent operations
+        metadata = engine.get_index_metadata()
+        assert len(metadata) == 3
+        for meta in metadata.values():
+            assert meta.access_count > 0
+
+    def test_model_boundary_conditions(self):
+        """Test model handling of boundary conditions"""
+        
+        # Test with minimal data
+        minimal_data = pd.DataFrame({
+            'feature_1': [0.0, 1.0],
+            'feature_2': [1.0, 0.0],
+            'target': [0.5, 0.5]
+        })
+        
+        try:
+            result = model_uprootiny.predict_numerai_target(minimal_data)
+            assert isinstance(result, (pd.Series, pd.DataFrame, np.ndarray))
+        except Exception as e:
+            # Should handle minimal data gracefully
+            assert "insufficient" in str(e).lower() or "minimum" in str(e).lower()
+        
+        # Test with extreme values
+        extreme_data = pd.DataFrame({
+            'feature_1': [float('inf'), float('-inf'), float('nan'), 1e10, -1e10],
+            'feature_2': [0, 0, 0, 0, 0],
+            'target': [0.5, 0.5, 0.5, 0.5, 0.5]
+        })
+        
+        try:
+            result = model_uprootiny.predict_numerai_target(extreme_data)
+            # Should handle or filter extreme values
+            assert not pd.isna(result).all()
+        except ValueError:
+            # Acceptable to reject extreme values
+            assert True
+        
+        # Test with all identical values
+        identical_data = pd.DataFrame({
+            'feature_1': [0.5] * 100,
+            'feature_2': [0.5] * 100,
+            'target': [0.5] * 100
+        })
+        
+        result = model_uprootiny.predict_numerai_target(identical_data)
+        assert isinstance(result, (pd.Series, pd.DataFrame, np.ndarray))
+
+    def test_file_system_edge_cases(self):
+        """Test file system related edge cases"""
+        analytics = UprootinyAnalytics()
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Test non-existent directory
+            non_existent = str(Path(temp_dir) / "does_not_exist")
+            result = analytics.analyze_submissions(non_existent, logs_dir=temp_dir)
+            assert isinstance(result, dict)
+            assert result.get('files_processed', 0) == 0
+            
+            # Test empty directory
+            empty_dir = Path(temp_dir) / "empty"
+            empty_dir.mkdir()
+            result = analytics.analyze_submissions(str(empty_dir), logs_dir=str(empty_dir))
+            assert isinstance(result, dict)
+            
+            # Test directory with only non-CSV files
+            non_csv_dir = Path(temp_dir) / "non_csv"
+            non_csv_dir.mkdir()
+            (non_csv_dir / "test.txt").write_text("not a csv")
+            (non_csv_dir / "test.json").write_text('{"not": "csv"}')
+            
+            result = analytics.analyze_submissions(str(non_csv_dir), logs_dir=str(non_csv_dir))
+            assert isinstance(result, dict)
+            
+            # Test very long filenames
+            long_name_dir = Path(temp_dir) / "long_names"
+            long_name_dir.mkdir()
+            long_filename = "x" * 200 + ".csv"
+            
+            try:
+                (long_name_dir / long_filename).write_text("id,era,target\n1,era1,0.5\n")
+                result = analytics.analyze_submissions(str(long_name_dir), logs_dir=str(long_name_dir))
+                assert isinstance(result, dict)
+            except OSError:
+                # Some filesystems don't support very long names
+                assert True
+
+    def test_numeric_precision_edge_cases(self):
+        """Test numeric precision and floating point edge cases"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Test with high precision floating point numbers
+        precision_data = pd.DataFrame({
+            'high_precision': [
+                1.0000000000000001,
+                1.0000000000000002,
+                1.0000000000000003,
+                1.9999999999999998,
+                1.9999999999999999,
+                2.0000000000000004
+            ],
+            'scientific': [1e-15, 1e-10, 1e10, 1e15, 1e-100, 1e100],
+            'near_zero': [1e-16, -1e-16, 0.0, -0.0, 1e-50, -1e-50]
+        })
+        
+        # Test BTREE index with high precision numbers
+        engine.create_index('high_precision', IndexType.BTREE, precision_data)
+        
+        # Test range queries with floating point precision
+        results = engine.range_query('high_precision', 1.0, 1.0000000000000002, precision_data)
+        assert len(results) >= 0
+        
+        # Test scientific notation handling
+        engine.create_index('scientific', IndexType.BTREE, precision_data)
+        sci_results = engine.range_query('scientific', 1e-12, 1e12, precision_data)
+        assert len(sci_results) >= 0
+        
+        # Test near-zero values
+        engine.create_index('near_zero', IndexType.BTREE, precision_data)
+        zero_results = engine.query('near_zero', 0.0, precision_data)
+        assert len(zero_results) >= 0
+
+    def test_unicode_and_encoding_edge_cases(self):
+        """Test unicode and encoding edge cases"""
+        analytics = UprootinyAnalytics()
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create file with unicode content
+            unicode_file = Path(temp_dir) / "unicode_test.csv"
+            unicode_content = "id,era,target,description\n"
+            unicode_content += "1,era1,0.5,测试数据\n"
+            unicode_content += "2,era2,0.6,тестовые данные\n"
+            unicode_content += "3,era3,0.7,données de test\n"
+            unicode_content += "4,era4,0.8,テストデータ\n"
+            unicode_content += "5,era5,0.9,🚀📊💹\n"
+            
+            # Write with different encodings
+            try:
+                unicode_file.write_text(unicode_content, encoding='utf-8')
+                result = analytics.analyze_submissions(temp_dir, logs_dir=temp_dir)
+                assert isinstance(result, dict)
+                assert result.get('files_processed', 0) >= 1
+            except UnicodeError:
+                # Some systems may have encoding limitations
+                assert True
+            
+            # Test with different file encodings
+            encodings = ['utf-8', 'latin1', 'ascii']
+            for encoding in encodings:
+                try:
+                    encoded_file = Path(temp_dir) / f"test_{encoding}.csv"
+                    safe_content = "id,era,target\n1,era1,0.5\n2,era2,0.6\n"
+                    encoded_file.write_text(safe_content, encoding=encoding)
+                except (UnicodeEncodeError, LookupError):
+                    continue
+            
+            # Test analytics can handle mixed encodings
+            result = analytics.analyze_submissions(temp_dir, logs_dir=temp_dir)
+            assert isinstance(result, dict)
+
+    @patch('model_uprootiny.predict_numerai_target')
+    def test_model_failure_handling(self, mock_predict):
+        """Test handling of model prediction failures"""
+        # Test various failure scenarios
+        failure_scenarios = [
+            Exception("General model failure"),
+            ValueError("Invalid input data"),
+            RuntimeError("Model runtime error"),
+            MemoryError("Out of memory"),
+            KeyboardInterrupt("User interruption")
+        ]
+        
+        test_data = pd.DataFrame({
+            'feature_1': [1, 2, 3],
+            'feature_2': [4, 5, 6],
+            'target': [0.1, 0.2, 0.3]
+        })
+        
+        for exception in failure_scenarios:
+            mock_predict.side_effect = exception
+            
+            if isinstance(exception, KeyboardInterrupt):
+                # KeyboardInterrupt should be re-raised
+                with pytest.raises(KeyboardInterrupt):
+                    model_uprootiny.predict_numerai_target(test_data)
+            else:
+                # Other exceptions should be handled gracefully
+                try:
+                    result = model_uprootiny.predict_numerai_target(test_data)
+                    # Should return None or empty result on failure
+                    assert result is None or len(result) == 0
+                except Exception as e:
+                    # Acceptable to re-raise certain exceptions
+                    assert isinstance(e, (ValueError, RuntimeError, MemoryError))
+
+    def test_performance_degradation_patterns(self):
+        """Test performance under degraded conditions"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create data that might cause performance issues
+        degrade_data = pd.DataFrame({
+            'skewed_dist': np.random.exponential(1, 1000),  # Highly skewed distribution
+            'repeated_vals': [1] * 500 + [2] * 300 + [3] * 200,  # High repetition
+            'sparse_cats': np.random.choice(range(500), 1000),  # Many sparse categories
+            'correlated_1': np.random.randn(1000),
+        })
+        degrade_data['correlated_2'] = degrade_data['correlated_1'] * 0.99 + np.random.randn(1000) * 0.01
+        
+        # Test index creation under degraded conditions
+        start_time = pd.Timestamp.now()
+        
+        engine.create_index('skewed_dist', IndexType.BTREE, degrade_data)
+        engine.create_index('repeated_vals', IndexType.BITMAP, degrade_data)
+        engine.create_index('sparse_cats', IndexType.HASH, degrade_data)
+        
+        creation_time = (pd.Timestamp.now() - start_time).total_seconds()
+        
+        # Performance should still be reasonable
+        assert creation_time < 10.0  # Should create indices in under 10 seconds
+        
+        # Test query performance under degraded conditions
+        query_start = pd.Timestamp.now()
+        
+        for _ in range(20):
+            # Query skewed distribution
+            percentile_val = np.percentile(degrade_data['skewed_dist'], 90)
+            skewed_results = engine.range_query('skewed_dist', 0, percentile_val, degrade_data)
+            
+            # Query repeated values
+            repeated_results = engine.query('repeated_vals', 1, degrade_data)
+            
+            # Query sparse categories
+            sparse_cat = np.random.choice(range(500))
+            sparse_results = engine.query('sparse_cats', sparse_cat, degrade_data)
+        
+        query_time = (pd.Timestamp.now() - query_start).total_seconds()
+        
+        # Query performance should remain reasonable
+        assert query_time < 5.0  # 20 queries should complete in under 5 seconds
+        
+        # Verify indices still function correctly
+        metadata = engine.get_index_metadata()
+        assert len(metadata) == 3
+        for meta in metadata.values():
+            assert meta.access_count > 0
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

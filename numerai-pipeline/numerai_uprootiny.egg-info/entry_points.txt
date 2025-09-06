@@ -1,0 +1,3 @@
+[console_scripts]
+numerai-uprootiny = model_uprootiny:main
+uprootiny-analyze = analytics.analyze_uprootiny:main

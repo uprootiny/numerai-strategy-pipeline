@@ -1,0 +1,341 @@
+#!/usr/bin/env python3
+"""
+Advanced indexing tests to improve coverage
+Focus on spatial, temporal, composite, and inverted indices
+"""
+
+import pytest
+import pandas as pd
+import numpy as np
+import time
+from datetime import datetime, timedelta
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from indexing.index_engine import IndexEngine, IndexType, IndexMetadata
+
+
+class TestAdvancedIndexing:
+    """Test advanced indexing functionality to improve coverage"""
+
+    def test_spatial_index_operations(self):
+        """Test spatial index with geographic-like data"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create spatial-like data
+        spatial_data = pd.DataFrame({
+            'lat': np.random.uniform(-90, 90, 500),
+            'lon': np.random.uniform(-180, 180, 500),
+            'value': np.random.uniform(0, 1, 500),
+            'region': np.random.choice(['NA', 'EU', 'AS', 'AF', 'OC'], 500)
+        })
+        
+        # Test spatial index creation
+        engine.create_index('lat', IndexType.SPATIAL, spatial_data)
+        engine.create_index('lon', IndexType.SPATIAL, spatial_data)
+        
+        # Test spatial queries
+        results = engine.query('lat', (0, 45), spatial_data)
+        assert len(results) > 0
+        
+        # Test spatial range queries
+        lat_range_results = engine.range_query('lat', -30, 30, spatial_data)
+        assert len(lat_range_results) > 0
+        
+        # Verify spatial optimization
+        metadata = engine.get_index_metadata()
+        assert any(meta.index_type == IndexType.SPATIAL for meta in metadata.values())
+
+    def test_temporal_index_operations(self):
+        """Test temporal index with time-series data"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create temporal data
+        base_time = datetime(2024, 1, 1)
+        temporal_data = pd.DataFrame({
+            'timestamp': [base_time + timedelta(hours=i) for i in range(1000)],
+            'value': np.random.uniform(0, 100, 1000),
+            'trend': np.cumsum(np.random.randn(1000) * 0.1),
+            'category': np.random.choice(['A', 'B', 'C'], 1000)
+        })
+        
+        # Test temporal index creation
+        engine.create_index('timestamp', IndexType.TEMPORAL, temporal_data)
+        
+        # Test temporal queries
+        start_time = base_time + timedelta(hours=100)
+        end_time = base_time + timedelta(hours=200)
+        results = engine.range_query('timestamp', start_time, end_time, temporal_data)
+        assert len(results) > 0
+        
+        # Test time-based optimization
+        recent_time = base_time + timedelta(hours=900)
+        recent_results = engine.query('timestamp', recent_time, temporal_data)
+        
+        # Verify temporal metadata tracking
+        metadata = engine.get_index_metadata()
+        temporal_meta = [meta for meta in metadata.values() if meta.index_type == IndexType.TEMPORAL]
+        assert len(temporal_meta) > 0
+        assert temporal_meta[0].access_count > 0
+
+    def test_composite_index_operations(self):
+        """Test composite index with multi-column optimization"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create multi-dimensional data
+        composite_data = pd.DataFrame({
+            'user_id': np.random.randint(1, 100, 800),
+            'session_id': np.random.randint(1, 1000, 800),
+            'action_type': np.random.choice(['view', 'click', 'purchase', 'exit'], 800),
+            'timestamp': pd.date_range('2024-01-01', periods=800, freq='H'),
+            'value': np.random.exponential(10, 800)
+        })
+        
+        # Test composite index creation
+        engine.create_index('user_session', IndexType.COMPOSITE, composite_data, 
+                          composite_columns=['user_id', 'session_id'])
+        
+        # Test composite queries
+        user_sessions = engine.composite_query(['user_id', 'session_id'], [25, 500], composite_data)
+        assert isinstance(user_sessions, pd.DataFrame)
+        
+        # Test multi-column optimization
+        action_composite = engine.create_index('user_action', IndexType.COMPOSITE, composite_data,
+                                             composite_columns=['user_id', 'action_type'])
+        
+        # Verify composite index metadata
+        metadata = engine.get_index_metadata()
+        composite_indices = [meta for meta in metadata.values() if meta.index_type == IndexType.COMPOSITE]
+        assert len(composite_indices) >= 2
+
+    def test_inverted_index_operations(self):
+        """Test inverted index for feature-like data"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create feature-rich data
+        inverted_data = pd.DataFrame({
+            'feature_1': np.random.choice([0, 1, 2, 3, 4], 600),
+            'feature_2': np.random.choice(['alpha', 'beta', 'gamma', 'delta'], 600),
+            'tags': [f"tag_{i%10}_{j%5}" for i, j in zip(range(600), np.random.randint(0, 20, 600))],
+            'score': np.random.uniform(0, 1, 600)
+        })
+        
+        # Test inverted index creation
+        engine.create_index('feature_1', IndexType.INVERTED, inverted_data)
+        engine.create_index('tags', IndexType.INVERTED, inverted_data)
+        
+        # Test inverted queries
+        feature_results = engine.inverted_query('feature_1', [1, 2, 3], inverted_data)
+        assert len(feature_results) > 0
+        
+        # Test tag-based queries
+        tag_results = engine.inverted_query('tags', ['tag_1_2', 'tag_5_3'], inverted_data)
+        
+        # Verify inverted index optimization
+        metadata = engine.get_index_metadata()
+        inverted_indices = [meta for meta in metadata.values() if meta.index_type == IndexType.INVERTED]
+        assert len(inverted_indices) >= 2
+
+    def test_index_memory_optimization(self):
+        """Test memory usage optimization and cleanup"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create large dataset for memory testing
+        memory_data = pd.DataFrame({
+            'id': range(2000),
+            'category': np.random.choice(['A', 'B', 'C', 'D', 'E', 'F'], 2000),
+            'value': np.random.uniform(0, 1000, 2000),
+            'timestamp': pd.date_range('2024-01-01', periods=2000, freq='30min')
+        })
+        
+        # Create multiple indices
+        engine.create_index('id', IndexType.HASH, memory_data)
+        engine.create_index('category', IndexType.BITMAP, memory_data)
+        engine.create_index('value', IndexType.BTREE, memory_data)
+        engine.create_index('timestamp', IndexType.TEMPORAL, memory_data)
+        
+        # Test memory usage tracking
+        initial_memory = engine.get_memory_usage()
+        assert initial_memory > 0
+        
+        # Test index cleanup
+        engine.drop_index('timestamp')
+        after_cleanup_memory = engine.get_memory_usage()
+        assert after_cleanup_memory <= initial_memory
+        
+        # Test memory optimization
+        engine.optimize_memory()
+        optimized_memory = engine.get_memory_usage()
+        
+        # Verify cleanup worked
+        metadata = engine.get_index_metadata()
+        assert 'timestamp' not in metadata
+
+    def test_index_performance_profiling(self):
+        """Test performance profiling and hit rate tracking"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create performance test data
+        perf_data = pd.DataFrame({
+            'lookup_key': np.random.randint(0, 1000, 1500),
+            'search_term': np.random.choice(['search_' + str(i) for i in range(50)], 1500),
+            'numeric_range': np.random.uniform(0, 100, 1500),
+            'category': np.random.choice(['cat_' + str(i) for i in range(20)], 1500)
+        })
+        
+        # Create indices for performance testing
+        engine.create_index('lookup_key', IndexType.HASH, perf_data)
+        engine.create_index('numeric_range', IndexType.BTREE, perf_data)
+        engine.create_index('category', IndexType.BITMAP, perf_data)
+        
+        # Perform multiple queries to build hit rate statistics
+        for _ in range(50):
+            key = np.random.randint(0, 1000)
+            engine.query('lookup_key', key, perf_data)
+            
+            range_val = np.random.uniform(0, 100)
+            engine.range_query('numeric_range', range_val - 10, range_val + 10, perf_data)
+            
+            category = f'cat_{np.random.randint(0, 20)}'
+            engine.query('category', category, perf_data)
+        
+        # Test performance statistics
+        stats = engine.get_performance_statistics()
+        assert isinstance(stats, dict)
+        assert 'total_queries' in stats
+        assert stats['total_queries'] > 0
+        
+        # Test hit rate calculation
+        metadata = engine.get_index_metadata()
+        for meta in metadata.values():
+            assert meta.access_count > 0
+            assert meta.hit_rate >= 0.0
+
+    def test_index_serialization(self):
+        """Test index persistence and serialization"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create test data
+        serial_data = pd.DataFrame({
+            'key': range(100),
+            'value': np.random.uniform(0, 1, 100),
+            'category': np.random.choice(['X', 'Y', 'Z'], 100)
+        })
+        
+        # Create indices
+        engine.create_index('key', IndexType.HASH, serial_data)
+        engine.create_index('value', IndexType.BTREE, serial_data)
+        engine.create_index('category', IndexType.BITMAP, serial_data)
+        
+        # Test serialization
+        serialized = engine.serialize_indices()
+        assert isinstance(serialized, bytes)
+        assert len(serialized) > 0
+        
+        # Test deserialization
+        new_engine = IndexEngine(friendly_mode=False)
+        new_engine.deserialize_indices(serialized)
+        
+        # Verify indices were restored
+        original_metadata = engine.get_index_metadata()
+        restored_metadata = new_engine.get_index_metadata()
+        
+        assert len(original_metadata) == len(restored_metadata)
+        for key in original_metadata:
+            assert key in restored_metadata
+            assert original_metadata[key].index_type == restored_metadata[key].index_type
+
+    def test_edge_cases_and_error_handling(self):
+        """Test edge cases and error handling for robustness"""
+        engine = IndexEngine(friendly_mode=True)
+        
+        # Test empty data handling
+        empty_data = pd.DataFrame()
+        result = engine.create_index('nonexistent', IndexType.HASH, empty_data)
+        assert result is None or isinstance(result, bool)
+        
+        # Test invalid column handling
+        valid_data = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
+        result = engine.create_index('nonexistent_col', IndexType.HASH, valid_data)
+        
+        # Test duplicate index creation
+        engine.create_index('a', IndexType.HASH, valid_data)
+        duplicate_result = engine.create_index('a', IndexType.HASH, valid_data)
+        
+        # Test invalid query parameters
+        invalid_query = engine.query('a', None, valid_data)
+        
+        # Test memory limits (if implemented)
+        try:
+            large_data = pd.DataFrame({
+                'col': range(100000),
+                'val': np.random.uniform(0, 1, 100000)
+            })
+            engine.create_index('col', IndexType.HASH, large_data)
+        except MemoryError:
+            pass  # Expected for very large datasets
+        
+        # Verify engine still functions after errors
+        metadata = engine.get_index_metadata()
+        assert isinstance(metadata, dict)
+
+
+class TestIndexIntegration:
+    """Integration tests for multiple index types working together"""
+    
+    def test_multi_index_query_optimization(self):
+        """Test query optimization across multiple indices"""
+        engine = IndexEngine(friendly_mode=False)
+        
+        # Create comprehensive dataset
+        integration_data = pd.DataFrame({
+            'id': range(1000),
+            'user_type': np.random.choice(['premium', 'basic', 'trial'], 1000),
+            'score': np.random.uniform(0, 100, 1000),
+            'region': np.random.choice(['US', 'EU', 'AS'], 1000),
+            'timestamp': pd.date_range('2024-01-01', periods=1000, freq='H'),
+            'features': [f"feat_{i%50}" for i in range(1000)]
+        })
+        
+        # Create multiple complementary indices
+        engine.create_index('id', IndexType.HASH, integration_data)
+        engine.create_index('user_type', IndexType.BITMAP, integration_data)
+        engine.create_index('score', IndexType.BTREE, integration_data)
+        engine.create_index('timestamp', IndexType.TEMPORAL, integration_data)
+        engine.create_index('features', IndexType.INVERTED, integration_data)
+        
+        # Test complex multi-index queries
+        # Query 1: Premium users with high scores
+        premium_users = engine.query('user_type', 'premium', integration_data)
+        high_score_ids = engine.range_query('score', 80, 100, integration_data)
+        
+        # Query 2: Recent activity analysis
+        recent_time = integration_data['timestamp'].max() - pd.Timedelta(hours=100)
+        recent_activity = engine.range_query('timestamp', recent_time, 
+                                           integration_data['timestamp'].max(), integration_data)
+        
+        # Query 3: Feature-based analysis
+        target_features = ['feat_1', 'feat_5', 'feat_10']
+        feature_results = engine.inverted_query('features', target_features, integration_data)
+        
+        # Verify all queries returned valid results
+        assert len(premium_users) > 0
+        assert len(high_score_ids) > 0
+        assert len(recent_activity) > 0
+        assert len(feature_results) > 0
+        
+        # Test performance after multiple operations
+        final_stats = engine.get_performance_statistics()
+        assert final_stats['total_queries'] > 5
+        
+        # Verify all indices are still functional
+        metadata = engine.get_index_metadata()
+        assert len(metadata) == 5
+        for meta in metadata.values():
+            assert meta.access_count > 0
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

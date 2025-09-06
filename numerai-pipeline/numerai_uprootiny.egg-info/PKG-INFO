@@ -1,0 +1,346 @@
+Metadata-Version: 2.4
+Name: numerai-uprootiny
+Version: 1.0.0
+Summary: Numerai trading model: uprootiny - Advanced quantitative finance model for tournament participation
+Author-email: uprootiny <uprootiny@example.com>
+Maintainer-email: uprootiny <uprootiny@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/uprootiny/numerai-uprootiny
+Project-URL: Repository, https://github.com/uprootiny/numerai-uprootiny
+Project-URL: Documentation, https://numerai-uprootiny.readthedocs.io/
+Project-URL: Bug Tracker, https://github.com/uprootiny/numerai-uprootiny/issues
+Project-URL: Changelog, https://github.com/uprootiny/numerai-uprootiny/blob/main/CHANGELOG.md
+Keywords: numerai,quantitative-finance,machine-learning,trading,predictions,tournament,financial-modeling
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: Topic :: Office/Business :: Financial :: Investment
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numerapi>=2.14.0
+Requires-Dist: pandas>=1.5.0
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: matplotlib>=3.5.0
+Requires-Dist: seaborn>=0.11.0
+Requires-Dist: jupyter>=1.0.0
+Requires-Dist: plotly>=5.0.0
+Requires-Dist: scipy>=1.8.0
+Requires-Dist: lightgbm>=3.3.0
+Requires-Dist: xgboost>=1.6.0
+Requires-Dist: optuna>=3.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-xdist>=2.5.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.8.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: isort>=5.10.0; extra == "dev"
+Requires-Dist: flake8>=5.0.0; extra == "dev"
+Requires-Dist: mypy>=0.991; extra == "dev"
+Requires-Dist: pre-commit>=2.20.0; extra == "dev"
+Requires-Dist: bandit>=1.7.0; extra == "dev"
+Requires-Dist: safety>=2.0.0; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=7.0.0; extra == "test"
+Requires-Dist: pytest-cov>=4.0.0; extra == "test"
+Requires-Dist: pytest-xdist>=2.5.0; extra == "test"
+Requires-Dist: pytest-mock>=3.8.0; extra == "test"
+Requires-Dist: coverage>=6.4.0; extra == "test"
+Requires-Dist: factory-boy>=3.2.0; extra == "test"
+Requires-Dist: freezegun>=1.2.0; extra == "test"
+Requires-Dist: responses>=0.21.0; extra == "test"
+Provides-Extra: docs
+Requires-Dist: sphinx>=5.0.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=1.0.0; extra == "docs"
+Requires-Dist: myst-parser>=0.18.0; extra == "docs"
+Requires-Dist: sphinx-autodoc-typehints>=1.19.0; extra == "docs"
+Provides-Extra: performance
+Requires-Dist: psutil>=5.9.0; extra == "performance"
+Requires-Dist: memory-profiler>=0.60.0; extra == "performance"
+Requires-Dist: line-profiler>=4.0.0; extra == "performance"
+Requires-Dist: py-spy>=0.3.0; extra == "performance"
+
+# 🚀 Numerai uprootiny Model
+
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests](https://img.shields.io/badge/tests-pytest-green.svg)](https://github.com/pytest-dev/pytest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A sophisticated quantitative finance model for the [Numerai tournament](https://numer.ai/), designed to predict stock market returns using machine learning techniques and feature engineering.
+
+## 🎯 Project Intent & Scope
+
+### Intent
+The **uprootiny** model aims to:
+- 🎯 **Achieve consistent top-quartile performance** in the Numerai tournament
+- 🔬 **Leverage advanced ML techniques** including ensemble methods, feature engineering, and hyperparameter optimization
+- 📊 **Maintain robust analytics** for performance tracking and model improvement
+- 🏗️ **Follow software engineering best practices** with comprehensive testing, documentation, and CI/CD
+
+### Scope
+**In Scope:**
+- ✅ Numerai tournament participation and submission automation
+- ✅ Advanced feature engineering and selection techniques
+- ✅ Multiple ML model types (LightGBM, XGBoost, Neural Networks)
+- ✅ Hyperparameter optimization using Optuna
+- ✅ Performance analytics and visualization
+- ✅ Risk management and position sizing
+- ✅ Backtesting and validation frameworks
+
+**Out of Scope:**
+- ❌ Live trading with real capital (tournament only)
+- ❌ External data sources beyond Numerai dataset
+- ❌ High-frequency trading strategies
+- ❌ Cryptocurrency or forex markets
+
+### Success Metrics
+- **Primary:** Consistent positive Sharpe ratio > 1.0
+- **Secondary:** Top 25% ranking in tournament
+- **Tertiary:** >85% test coverage, <5% monthly max drawdown
+
+## 🏗️ Architecture & Components
+
+```
+numerai-uprootiny/
+├── 🧠 model_uprootiny.py      # Core model implementation
+├── 📊 analytics/              # Performance analysis & visualization
+├── 🔧 pipelines/             # Data processing pipelines  
+├── 🔬 research/              # Experimental notebooks
+├── 📈 submissions/           # Historical submissions
+├── 📋 tests/                 # Comprehensive test suite
+├── 🏭 backtests/            # Backtesting results
+└── 📖 docs/                 # Documentation
+```
+
+### Core Components
+
+1. **Model Engine** (`model_uprootiny.py`)
+   - Prediction generation using ensemble methods
+   - Feature engineering and selection
+   - Risk-adjusted position sizing
+
+2. **Analytics Suite** (`analytics/`)
+   - Performance metrics calculation
+   - Visualization and reporting
+   - Model diagnostics and validation
+
+3. **Testing Framework** (`tests/`)
+   - Unit tests with >85% coverage
+   - Integration tests for API interactions
+   - Performance benchmarks
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+ 
+- Numerai API credentials
+- 8GB+ RAM (for model training)
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/uprootiny/numerai-uprootiny.git
+cd numerai-uprootiny
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+make install-dev
+# Or: pip install -r requirements.txt && pip install -r requirements-dev.txt
+```
+
+### Credentials Setup
+```bash
+# Create credentials directory
+mkdir -p ~/.numerai
+
+# Add your Numerai API credentials to ~/.numerai/credentials
+{
+  "public_id": "your_public_id_here",
+  "secret_key": "your_secret_key_here"
+}
+```
+
+### Basic Usage
+
+```bash
+# Run model prediction
+make run
+# Or: python model_uprootiny.py
+
+# Run analytics
+make analyze  
+# Or: python analytics/analyze_uprootiny.py
+
+# Run tests
+make test
+# Or: pytest tests/ -v
+
+# Check code quality
+make check  # Runs formatting, linting, type checking, and tests
+```
+
+## 📊 Model Performance
+
+### Current Statistics (Live Tournament)
+- **Sharpe Ratio:** TBD (model in development)
+- **Max Drawdown:** TBD 
+- **Win Rate:** TBD
+- **Average Return:** TBD
+
+### Historical Backtesting
+```bash
+# Run backtesting analysis
+python research/backtest_analysis.py
+```
+
+## 🔧 Development Workflow
+
+### Code Quality Standards
+- **Formatting:** Black (line length: 88)
+- **Import Sorting:** isort  
+- **Linting:** flake8
+- **Type Checking:** mypy
+- **Security:** bandit
+- **Testing:** pytest (>85% coverage required)
+
+### Development Commands
+```bash
+# Full development cycle
+make dev                    # Install deps, format, lint, test
+
+# Individual operations
+make format                 # Format code with black + isort
+make lint                   # Run flake8 linting
+make type-check            # Run mypy type checking  
+make test-coverage         # Run tests with coverage report
+make security              # Run security checks
+
+# Performance profiling
+make profile               # Profile model performance
+make memory-profile        # Profile memory usage
+make benchmark            # Run performance benchmarks
+```
+
+### Testing Strategy
+```bash
+# Run different test suites
+make test                  # All tests
+make test-fast            # Exclude slow tests
+make test-integration     # Integration tests only
+make test-performance     # Performance tests only
+make test-parallel        # Run tests in parallel
+```
+
+## 🏭 Production Deployment
+
+### Model Validation Checklist
+- [ ] All tests pass (`make test`)
+- [ ] Code quality checks pass (`make quality`)  
+- [ ] Performance benchmarks meet targets (`make benchmark`)
+- [ ] Backtest results validate model (`make backtest`)
+- [ ] Security scan clean (`make security`)
+
+### Submission Process
+```bash
+# Validate model before submission
+make validate-model
+
+# Generate and submit predictions
+python model_uprootiny.py --submit
+
+# Monitor submission status
+python analytics/track_submission.py
+```
+
+## 📈 Analytics & Monitoring
+
+### Key Metrics Tracked
+- **Performance:** Sharpe ratio, max drawdown, win rate
+- **Risk:** Value at Risk (VaR), Expected Shortfall (ES)
+- **Model Health:** Feature importance, prediction distribution
+- **System:** Memory usage, execution time, API latency
+
+### Visualization Dashboard
+```bash
+# Generate performance dashboard
+python analytics/generate_dashboard.py
+
+# View in browser at http://localhost:8050
+python analytics/serve_dashboard.py
+```
+
+## 🔬 Research & Experimentation
+
+The `research/` directory contains Jupyter notebooks for:
+- Feature engineering experiments
+- Model architecture testing  
+- Hyperparameter optimization studies
+- Market regime analysis
+
+```bash
+# Launch Jupyter Lab for research
+jupyter lab research/
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**API Authentication Errors**
+```bash
+# Check credentials file exists and has correct format
+cat ~/.numerai/credentials
+```
+
+**Memory Issues**
+```bash  
+# Monitor memory usage during model execution
+make memory-profile
+```
+
+**Performance Issues**
+```bash
+# Profile code performance
+make profile
+```
+
+### Getting Help
+- 📚 [Full Documentation](docs/)
+- 🐛 [Issue Tracker](https://github.com/uprootiny/numerai-uprootiny/issues)
+- 💬 [Discussions](https://github.com/uprootiny/numerai-uprootiny/discussions)
+
+## 📄 Project Metadata
+
+**Generated:** 2025-08-27 (Enhanced from AI Playbook Template)  
+**Version:** 1.0.0  
+**License:** MIT  
+**Python:** 3.8+  
+**Dependencies:** See `requirements.txt` and `pyproject.toml`
+
+## 🤝 Contributing
+
+This is a private repository for personal tournament participation. However, the codebase follows open-source best practices for maintainability and collaboration.
+
+### Development Setup
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Make changes with tests (`make dev`)
+4. Commit changes (`git commit -m 'Add amazing feature'`)
+5. Push to branch (`git push origin feature/amazing-feature`)
+6. Open Pull Request
+
+---
+
+**Disclaimer:** This model is for educational and tournament purposes only. Past performance does not guarantee future results. Always understand the risks before participating in any financial competition.

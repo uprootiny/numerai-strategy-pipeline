@@ -1,0 +1,256 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "numerai-uprootiny"
+version = "1.0.0"
+description = "Numerai trading model: uprootiny - Advanced quantitative finance model for tournament participation"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "uprootiny", email = "uprootiny@example.com"},
+]
+maintainers = [
+    {name = "uprootiny", email = "uprootiny@example.com"},
+]
+keywords = [
+    "numerai", 
+    "quantitative-finance", 
+    "machine-learning", 
+    "trading", 
+    "predictions",
+    "tournament",
+    "financial-modeling"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numerapi>=2.14.0",
+    "pandas>=1.5.0",
+    "numpy>=1.21.0",
+    "scikit-learn>=1.0.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "jupyter>=1.0.0",
+    "plotly>=5.0.0",
+    "scipy>=1.8.0",
+    "lightgbm>=3.3.0",
+    "xgboost>=1.6.0",
+    "optuna>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=2.5.0",
+    "pytest-mock>=3.8.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=0.991",
+    "pre-commit>=2.20.0",
+    "bandit>=1.7.0",
+    "safety>=2.0.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=2.5.0",
+    "pytest-mock>=3.8.0",
+    "coverage>=6.4.0",
+    "factory-boy>=3.2.0",
+    "freezegun>=1.2.0",
+    "responses>=0.21.0",
+]
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=0.18.0",
+    "sphinx-autodoc-typehints>=1.19.0",
+]
+performance = [
+    "psutil>=5.9.0",
+    "memory-profiler>=0.60.0",
+    "line-profiler>=4.0.0",
+    "py-spy>=0.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/uprootiny/numerai-uprootiny"
+Repository = "https://github.com/uprootiny/numerai-uprootiny"
+Documentation = "https://numerai-uprootiny.readthedocs.io/"
+"Bug Tracker" = "https://github.com/uprootiny/numerai-uprootiny/issues"
+Changelog = "https://github.com/uprootiny/numerai-uprootiny/blob/main/CHANGELOG.md"
+
+[project.scripts]
+numerai-uprootiny = "model_uprootiny:main"
+uprootiny-analyze = "analytics.analyze_uprootiny:main"
+
+[tool.setuptools]
+packages = ["indexing", "analytics"]
+include-package-data = true
+py-modules = ["model_uprootiny"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.yaml", "*.yml", "*.txt", "*.md"]
+
+# Testing configuration
+[tool.pytest.ini_options]
+minversion = "6.2"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=.",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+    "--cov-fail-under=50",
+    "--durations=10",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "api: marks tests as requiring API access",
+    "performance: marks tests as performance tests",
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# Code coverage
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/.*",
+    "setup.py",
+    "conftest.py",
+    "*/site-packages/*",
+    "*/.venv/*",
+    "*/venv/*",
+    "robust_pipeline.py",
+    "deploy_pipeline.sh",
+    "simple_deploy.sh",
+    "migrate_numerai_pipeline.py",
+]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+ignore_errors = true
+show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# Code formatting with Black
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+# Import sorting with isort
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["numerai_uprootiny", "analytics"]
+known_third_party = ["numerapi", "pandas", "numpy", "sklearn", "matplotlib", "seaborn"]
+skip = [".gitignore", ".dockerignore"]
+extend_skip = [".md", ".json"]
+skip_glob = ["**/migrations/*"]
+
+# Type checking with mypy
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "numerapi.*",
+    "matplotlib.*",
+    "seaborn.*",
+    "plotly.*",
+    "lightgbm.*",
+    "xgboost.*",
+    "optuna.*",
+    "sklearn.*",
+]
+ignore_missing_imports = true
+
+# Linting with flake8
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "E266", "E501", "W503", "F403", "F401"]
+max-complexity = 18
+select = ["B", "C", "E", "F", "W", "T4", "B9"]
+
+# Security scanning with bandit
+[tool.bandit]
+exclude_dirs = ["tests", "test_*"]
+skips = ["B101", "B601"]
+
+# Note: Pre-commit configuration should be in .pre-commit-config.yaml
+# This section is for reference only and should be moved to separate file

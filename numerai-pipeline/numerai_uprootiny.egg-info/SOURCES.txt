@@ -1,0 +1,16 @@
+README.md
+model_uprootiny.py
+pyproject.toml
+analytics/analyze_uprootiny.py
+indexing/__init__.py
+indexing/index_engine.py
+numerai_uprootiny.egg-info/PKG-INFO
+numerai_uprootiny.egg-info/SOURCES.txt
+numerai_uprootiny.egg-info/dependency_links.txt
+numerai_uprootiny.egg-info/entry_points.txt
+numerai_uprootiny.egg-info/requires.txt
+numerai_uprootiny.egg-info/top_level.txt
+tests/test_analytics.py
+tests/test_analytics_extended.py
+tests/test_indexing.py
+tests/test_model_uprootiny.py
