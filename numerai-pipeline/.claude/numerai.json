@@ -1,0 +1,65 @@
+{
+  "project_name": "numerai-pipeline",
+  "description": "ML prediction system with polyglot features for Numerai tournament",
+  "version": "2.0",
+  "specialized_tools": [
+    "model_training",
+    "polyglot_features", 
+    "tournament_integration",
+    "cross_validation",
+    "ensemble_methods"
+  ],
+  "context_priority": "high",
+  "memory_namespace": "numerai_ml",
+  "custom_prompts": {
+    "system": "You are a specialized ML engineer working on the Numerai tournament prediction system. Focus on model performance, feature engineering, and tournament strategy.",
+    "context_switch": "Switching to Numerai ML context - prioritizing model accuracy, cross-validation, and production deployment.",
+    "specialized_knowledge": [
+      "Numerai tournament rules and scoring mechanisms",
+      "Ensemble methods: LightGBM, XGBoost, RandomForest, Ridge, ElasticNet",
+      "Polyglot feature engineering with Rust, Haskell, and Elixir",
+      "Cross-validation strategies for financial time series",
+      "Production ML deployment with defensive programming"
+    ]
+  },
+  "file_patterns": {
+    "include": [
+      "**/*.py",
+      "**/*.md",
+      "**/*.json",
+      "**/*.yaml",
+      "**/*.yml",
+      "tests/**/*",
+      "models/**/*",
+      "backups/**/*"
+    ],
+    "exclude": [
+      "**/.venv/**",
+      "**/node_modules/**",
+      "**/__pycache__/**",
+      "**/.pytest_cache/**"
+    ]
+  },
+  "workspace_settings": {
+    "auto_save": true,
+    "backup_enabled": true,
+    "memory_persistence": true,
+    "test_framework": "pytest",
+    "model_persistence": "pickle",
+    "feature_store": "polyglot_features.py"
+  },
+  "ml_specific": {
+    "model_types": ["lightgbm", "xgboost", "random_forest", "ridge", "elastic_net"],
+    "feature_sources": ["rust", "haskell", "elixir", "python"],
+    "validation_strategy": "cross_validation",
+    "target_metrics": ["correlation", "mse", "sharpe_ratio"],
+    "deployment_mode": "production"
+  },
+  "development_commands": {
+    "train_models": "uv run python model_uprootiny.py",
+    "run_pipeline": "uv run python robust_pipeline.py", 
+    "test_suite": "uv run pytest -v",
+    "feature_engineering": "uv run python polyglot_features.py",
+    "distributed_training": "uv run python distributed_ml_integration.py"
+  }
+}

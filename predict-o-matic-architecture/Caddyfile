@@ -1,0 +1,83 @@
+:8080
+
+root * /var/www/strategy.uprootiny.dev
+
+file_server
+
+# Enable CORS for API endpoints
+header {
+    Access-Control-Allow-Origin *
+    Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers "Content-Type"
+}
+
+# Handle API routes with mock responses
+route /api/vessels-status {
+    respond `{
+        "portfolio-value": 4.65,
+        "total-attention-capacity": 14.7,
+        "vessel-types": {
+            "ml-prediction-engine": ["numerai"],
+            "trading-analysis-platform": ["pythia"],
+            "strategy-validation-engine": ["backtesting"],
+            "real-time-interface": ["phoenix"],
+            "performance-optimization": ["rust"],
+            "mathematical-modeling": ["haskell"]
+        },
+        "synergy-network-density": 2.5,
+        "strategic-recommendation": "OPTIMIZE: Focus on highest-value vessels",
+        "predict-o-matic-alignment": {
+            "current-state": "Technical routing with financial mapping",
+            "vision-state": "Strategic attention flow optimization",
+            "alignment-score": 0.775,
+            "next-phase": "Implement attention flow dynamics and value stream optimization"
+        }
+    }` 200 {
+        Content-Type application/json
+    }
+}
+
+route /api/projects {
+    respond `{
+        "numerai": {
+            "vessel-type": "ml-prediction-engine",
+            "revenue-stream": "tournament-winnings",
+            "strategic-value": 0.85,
+            "attention-multiplier": 3.2,
+            "synergies": ["pythia", "backtesting"],
+            "path": "/var/www/strategy.uprootiny.dev/numerai-pipeline"
+        },
+        "pythia": {
+            "vessel-type": "trading-analysis-platform",
+            "revenue-stream": "strategy-optimization", 
+            "strategic-value": 0.90,
+            "attention-multiplier": 2.8,
+            "synergies": ["numerai", "rust", "haskell"],
+            "path": "/tmp/pythia-demo"
+        },
+        "semantic-explorer": {
+            "vessel-type": "architectural-analysis-interface",
+            "revenue-stream": "system-optimization",
+            "strategic-value": 0.95,
+            "attention-multiplier": 3.5,
+            "synergies": ["numerai", "pythia", "haskell"],
+            "path": "/var/www/strategy.uprootiny.dev/predict-o-matic-architecture"
+        }
+    }` 200 {
+        Content-Type application/json
+    }
+}
+
+route /api/switch-context/* {
+    respond `{"success": true, "vessel": "{path.1}", "output": "Context switched to {path.1}"}` 200 {
+        Content-Type application/json
+    }
+}
+
+# Serve the semantic explorer as default
+try_files {path} /predict-o-matic-architecture/semantic-explorer.html
+
+log {
+    output stdout
+    format console
+}

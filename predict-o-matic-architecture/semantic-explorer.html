@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict-O-Matic Semantic Architecture Explorer - Instrumented & Test-Covered</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Semantic color system */
+            --primary: hsl(200, 95%, 14%);
+            --surface: hsl(200, 25%, 10%);
+            --surface-raised: hsl(200, 20%, 13%);
+            --surface-overlay: hsla(200, 30%, 8%, 0.95);
+            
+            --accent-cyan: hsl(180, 100%, 45%);
+            --accent-blue: hsl(210, 100%, 60%);
+            --accent-purple: hsl(270, 100%, 65%);
+            --accent-pink: hsl(330, 100%, 65%);
+            --accent-green: hsl(150, 80%, 50%);
+            --accent-orange: hsl(30, 100%, 60%);
+            
+            --text-primary: hsl(200, 20%, 93%);
+            --text-secondary: hsl(200, 15%, 73%);
+            --text-tertiary: hsl(200, 10%, 53%);
+            
+            /* Predict-O-Matic brand colors */
+            --predict-gold: hsl(45, 100%, 60%);
+            --predict-blue: hsl(210, 100%, 55%);
+            --predict-green: hsl(150, 80%, 50%);
+            
+            /* Test coverage colors */
+            --coverage-high: hsl(120, 80%, 50%);
+            --coverage-medium: hsl(60, 100%, 50%);
+            --coverage-low: hsl(0, 80%, 50%);
+            --coverage-none: hsl(0, 0%, 40%);
+            
+            /* Interaction states */
+            --hover-lift: translateY(-2px);
+            --active-scale: scale(0.98);
+            --focus-ring: 0 0 0 3px hsla(180, 100%, 45%, 0.3);
+            
+            /* Timing */
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: default;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Canvas container */
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #main-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #main-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* Enhanced toolbar with test controls */
+        .toolbar {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: var(--surface-overlay);
+            backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 16px;
+            border: 1px solid hsla(200, 20%, 100%, 0.08);
+            box-shadow: 
+                0 10px 40px hsla(0, 0%, 0%, 0.4),
+                inset 0 1px 0 hsla(200, 20%, 100%, 0.08);
+            z-index: 100;
+            animation: slideDown 0.5s var(--ease-out);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+            padding: 0 8px;
+            border-right: 1px solid hsla(200, 20%, 100%, 0.08);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-button {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out);
+            font-size: 18px;
+        }
+
+        .toolbar-button:hover {
+            background: hsla(200, 20%, 100%, 0.08);
+            color: var(--text-primary);
+            transform: var(--hover-lift);
+        }
+
+        .toolbar-button:active {
+            transform: var(--active-scale);
+        }
+
+        .toolbar-button.active {
+            background: var(--accent-cyan);
+            color: var(--primary);
+            box-shadow: 
+                0 4px 12px hsla(180, 100%, 45%, 0.3),
+                inset 0 1px 0 hsla(180, 100%, 60%, 0.4);
+        }
+
+        .toolbar-button.testing-active {
+            background: var(--coverage-high);
+            color: var(--primary);
+            animation: testPulse 2s infinite;
+        }
+
+        .toolbar-button.profiling-active {
+            background: var(--predict-gold);
+            color: var(--primary);
+            animation: profilePulse 2s infinite;
+        }
+
+        @keyframes testPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes profilePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .toolbar-button[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background: var(--surface-raised);
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            animation: tooltipIn 0.2s 0.5s var(--ease-out) forwards;
+        }
+
+        @keyframes tooltipIn {
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* Test coverage panel */
+        .coverage-panel {
+            position: fixed;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 380px;
+            max-height: 85vh;
+            background: var(--surface-overlay);
+            backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid hsla(200, 20%, 100%, 0.08);
+            box-shadow: 
+                0 20px 60px hsla(0, 0%, 0%, 0.5),
+                inset 0 1px 0 hsla(200, 20%, 100%, 0.08);
+            overflow: hidden;
+            z-index: 100;
+            animation: slideIn 0.5s var(--ease-out);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(-20px);
+            }
+        }
+
+        .coverage-header {
+            padding: 20px;
+            border-bottom: 1px solid hsla(200, 20%, 100%, 0.08);
+            background: linear-gradient(135deg, var(--coverage-high), var(--predict-gold));
+            color: var(--primary);
+        }
+
+        .coverage-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .coverage-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .coverage-content {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(85vh - 100px);
+        }
+
+        .coverage-section {
+            margin-bottom: 24px;
+        }
+
+        .coverage-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-tertiary);
+            margin-bottom: 12px;
+        }
+
+        /* Test runner display */
+        .test-runner {
+            background: hsla(200, 30%, 10%, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .test-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .test-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--coverage-high);
+        }
+
+        .test-progress {
+            width: 100%;
+            height: 8px;
+            background: hsla(200, 20%, 100%, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .test-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--coverage-high), var(--predict-gold));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .test-suite {
+            margin-bottom: 12px;
+            padding: 8px;
+            background: hsla(200, 20%, 100%, 0.05);
+            border-radius: 8px;
+        }
+
+        .test-suite-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .test-suite-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .test-suite-icon.passing {
+            background: var(--coverage-high);
+        }
+
+        .test-suite-icon.failing {
+            background: var(--coverage-low);
+        }
+
+        .test-suite-icon.pending {
+            background: var(--coverage-medium);
+        }
+
+        .test-case {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin: 2px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .test-case::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+        }
+
+        .test-case.pass::before {
+            background: var(--coverage-high);
+        }
+
+        .test-case.fail::before {
+            background: var(--coverage-low);
+        }
+
+        .test-case.pending::before {
+            background: var(--coverage-medium);
+        }
+
+        /* Coverage visualization */
+        .coverage-overview {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .coverage-metric {
+            background: hsla(200, 30%, 10%, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .coverage-value {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 4px;
+        }
+
+        .coverage-value.high {
+            color: var(--coverage-high);
+        }
+
+        .coverage-value.medium {
+            color: var(--coverage-medium);
+        }
+
+        .coverage-value.low {
+            color: var(--coverage-low);
+        }
+
+        .coverage-label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Profiling metrics display */
+        .profiling-metrics {
+            background: hsla(200, 30%, 10%, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--predict-gold);
+        }
+
+        .metric-bar {
+            width: 60px;
+            height: 4px;
+            background: hsla(200, 20%, 100%, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--predict-blue), var(--predict-gold));
+            transition: width 0.3s ease;
+        }
+
+        /* Performance flame graph */
+        .flame-graph {
+            height: 80px;
+            background: hsla(200, 30%, 10%, 0.5);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .flame-bar {
+            position: absolute;
+            height: 12px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 2px;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .flame-bar:hover {
+            opacity: 1;
+            transform: scaleY(1.2);
+        }
+
+        .flame-bar.hot {
+            background: linear-gradient(90deg, var(--coverage-low), var(--coverage-medium));
+        }
+
+        .flame-bar.warm {
+            background: linear-gradient(90deg, var(--coverage-medium), var(--predict-gold));
+        }
+
+        .flame-bar.cool {
+            background: linear-gradient(90deg, var(--coverage-high), var(--accent-cyan));
+        }
+
+        /* Keyword filters with test coverage indicators */
+        .keyword-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+        }
+
+        .keyword-chip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: hsla(200, 20%, 100%, 0.05);
+            border: 1px solid hsla(200, 20%, 100%, 0.1);
+            border-radius: 20px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out);
+            user-select: none;
+            position: relative;
+        }
+
+        .keyword-chip:hover {
+            background: hsla(200, 20%, 100%, 0.1);
+            border-color: hsla(200, 20%, 100%, 0.2);
+            transform: var(--hover-lift);
+        }
+
+        .keyword-chip.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: var(--primary);
+            font-weight: 500;
+            box-shadow: 0 4px 12px hsla(180, 100%, 45%, 0.2);
+        }
+
+        .keyword-chip.tested::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: var(--coverage-high);
+            border-radius: 50%;
+            animation: testDot 2s infinite;
+        }
+
+        .keyword-chip.profiled::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            width: 8px;
+            height: 8px;
+            background: var(--predict-gold);
+            border-radius: 50%;
+            animation: profileDot 2s infinite;
+        }
+
+        @keyframes testDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        @keyframes profileDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .filter-expression {
+            padding: 16px;
+            background: hsla(200, 30%, 10%, 0.5);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-cyan);
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        /* Architecture Layer Panel with test status */
+        .architecture-panel {
+            position: fixed;
+            right: 24px;
+            top: 24px;
+            width: 360px;
+            max-height: 80vh;
+            background: var(--surface-overlay);
+            backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid hsla(200, 20%, 100%, 0.08);
+            box-shadow: 
+                0 20px 60px hsla(0, 0%, 0%, 0.5),
+                inset 0 1px 0 hsla(200, 20%, 100%, 0.08);
+            overflow: hidden;
+            z-index: 100;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s var(--ease-out);
+        }
+
+        .architecture-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .arch-header {
+            padding: 20px;
+            border-bottom: 1px solid hsla(200, 20%, 100%, 0.08);
+            background: linear-gradient(135deg, var(--predict-blue), var(--predict-green));
+            color: var(--primary);
+        }
+
+        .arch-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .arch-content {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(80vh - 80px);
+        }
+
+        .layer-item {
+            background: hsla(200, 20%, 100%, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--predict-gold);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .layer-item:hover {
+            background: hsla(200, 20%, 100%, 0.08);
+            transform: translateX(4px);
+        }
+
+        .layer-item.active {
+            background: hsla(45, 100%, 60%, 0.1);
+            border-left-color: var(--predict-gold);
+        }
+
+        .layer-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .layer-test-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--coverage-none);
+        }
+
+        .layer-test-indicator.high {
+            background: var(--coverage-high);
+        }
+
+        .layer-test-indicator.medium {
+            background: var(--coverage-medium);
+        }
+
+        .layer-test-indicator.low {
+            background: var(--coverage-low);
+        }
+
+        .layer-stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .layer-stat {
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-tertiary);
+        }
+
+        .layer-coverage {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: hsla(200, 30%, 10%, 0.7);
+        }
+
+        /* Test status indicator */
+        .test-status-indicator {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: var(--surface-overlay);
+            backdrop-filter: blur(24px);
+            border-radius: 20px;
+            border: 1px solid hsla(200, 20%, 100%, 0.08);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .test-status-indicator.active {
+            opacity: 1;
+        }
+
+        .test-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--coverage-high);
+            animation: pulse 2s infinite;
+        }
+
+        .test-status-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .test-metrics-inline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--coverage-high);
+        }
+
+        /* Enhanced info overlay */
+        .info-overlay {
+            position: fixed;
+            top: 24px;
+            right: 400px;
+            width: 320px;
+            background: var(--surface-overlay);
+            backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 16px;
+            border: 1px solid hsla(200, 20%, 100%, 0.08);
+            padding: 20px;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s var(--ease-out);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .info-overlay.visible {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .info-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--predict-gold);
+        }
+
+        .info-subtitle {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 16px;
+        }
+
+        .info-stats {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid hsla(200, 20%, 100%, 0.05);
+        }
+
+        .info-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .info-stat-value {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Command palette enhanced */
+        .command-palette {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            width: 600px;
+            max-width: 90vw;
+            background: var(--surface-overlay);
+            backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid hsla(200, 20%, 100%, 0.08);
+            box-shadow: 
+                0 40px 80px hsla(0, 0%, 0%, 0.6),
+                inset 0 1px 0 hsla(200, 20%, 100%, 0.08);
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s var(--ease-out);
+            z-index: 1000;
+        }
+
+        .command-palette.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .command-input {
+            width: 100%;
+            padding: 20px 24px;
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            color: var(--text-primary);
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .command-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .command-results {
+            max-height: 400px;
+            overflow-y: auto;
+            border-top: 1px solid hsla(200, 20%, 100%, 0.08);
+        }
+
+        .command-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .command-item:hover,
+        .command-item.selected {
+            background: hsla(200, 20%, 100%, 0.05);
+        }
+
+        .command-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: hsla(200, 20%, 100%, 0.08);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .command-text {
+            flex: 1;
+        }
+
+        .command-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .command-description {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .architecture-panel {
+                right: 0;
+                top: auto;
+                bottom: 0;
+                width: 100%;
+                max-height: 40vh;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .info-overlay {
+                right: 24px;
+                width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .coverage-panel {
+                left: 0;
+                top: auto;
+                bottom: 0;
+                transform: none;
+                width: 100%;
+                max-height: 50vh;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .toolbar {
+                top: 12px;
+                padding: 8px;
+            }
+
+            .info-overlay {
+                right: 12px;
+                top: auto;
+                bottom: 60vh;
+                width: calc(100% - 24px);
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus states */
+        *:focus-visible {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+
+        /* Test result animations */
+        @keyframes testPass {
+            0% { background: var(--coverage-none); }
+            50% { background: var(--coverage-medium); }
+            100% { background: var(--coverage-high); }
+        }
+
+        @keyframes testFail {
+            0% { background: var(--coverage-none); }
+            50% { background: var(--coverage-medium); }
+            100% { background: var(--coverage-low); }
+        }
+
+        .test-animation-pass {
+            animation: testPass 1s ease-in-out;
+        }
+
+        .test-animation-fail {
+            animation: testFail 1s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="main-canvas"></canvas>
+    </div>
+
+    <!-- Enhanced toolbar with test and profiling controls -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-button active" data-tooltip="Explore" data-mode="explore">
+                <span>🔍</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="Test Mode" data-mode="test">
+                <span>🧪</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="Profile" data-mode="profile">
+                <span>📊</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="Connect" data-mode="connect">
+                <span>🔗</span>
+            </button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-button" data-tooltip="Run Tests" id="test-runner-toggle">
+                <span>🏃‍♂️</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="Live Profiling" id="profiling-toggle">
+                <span>⚡</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="Architecture" id="architecture-toggle">
+                <span>🏗️</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="Physics" id="physics-toggle">
+                <span>⚙️</span>
+            </button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-button" data-tooltip="Coverage Report" id="coverage-toggle">
+                <span>📈</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="API Bridge" id="api-bridge-toggle">
+                <span>🌉</span>
+            </button>
+            <button class="toolbar-button" data-tooltip="Command Palette" id="command-palette-toggle">
+                <span>⌘</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Test coverage and profiling panel -->
+    <div class="coverage-panel" id="coverage-panel">
+        <div class="coverage-header">
+            <div class="coverage-title">Test Coverage & Performance</div>
+            <div class="coverage-subtitle">Real-time testing and profiling suite</div>
+        </div>
+        <div class="coverage-content">
+            <div class="coverage-section">
+                <div class="coverage-section-title">Coverage Overview</div>
+                <div class="coverage-overview">
+                    <div class="coverage-metric">
+                        <div class="coverage-value high" id="line-coverage">87.3%</div>
+                        <div class="coverage-label">Line Coverage</div>
+                    </div>
+                    <div class="coverage-metric">
+                        <div class="coverage-value high" id="branch-coverage">82.1%</div>
+                        <div class="coverage-label">Branch Coverage</div>
+                    </div>
+                    <div class="coverage-metric">
+                        <div class="coverage-value medium" id="function-coverage">73.9%</div>
+                        <div class="coverage-label">Function Coverage</div>
+                    </div>
+                    <div class="coverage-metric">
+                        <div class="coverage-value high" id="statement-coverage">91.2%</div>
+                        <div class="coverage-label">Statement Coverage</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coverage-section">
+                <div class="coverage-section-title">Test Runner</div>
+                <div class="test-runner">
+                    <div class="test-status">
+                        <span class="test-count" id="test-count">154 tests passed, 3 failed</span>
+                        <button id="run-tests-btn" style="background: var(--coverage-high); color: var(--primary); border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px;">RUN</button>
+                    </div>
+                    <div class="test-progress">
+                        <div class="test-progress-fill" id="test-progress-fill"></div>
+                    </div>
+                    
+                    <div class="test-suite">
+                        <div class="test-suite-name">
+                            <div class="test-suite-icon passing"></div>
+                            Semantic Analysis Suite
+                        </div>
+                        <div class="test-case pass">Node graph construction</div>
+                        <div class="test-case pass">Edge weight calculation</div>
+                        <div class="test-case pass">Keyword filtering</div>
+                    </div>
+
+                    <div class="test-suite">
+                        <div class="test-suite-name">
+                            <div class="test-suite-icon failing"></div>
+                            Architecture Integration
+                        </div>
+                        <div class="test-case pass">Layer connectivity</div>
+                        <div class="test-case fail">API bridge connection</div>
+                        <div class="test-case pass">Performance metrics</div>
+                    </div>
+
+                    <div class="test-suite">
+                        <div class="test-suite-name">
+                            <div class="test-suite-icon passing"></div>
+                            Profiling Engine
+                        </div>
+                        <div class="test-case pass">Sample collection</div>
+                        <div class="test-case pass">Flame graph generation</div>
+                        <div class="test-case pass">Memory tracking</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coverage-section">
+                <div class="coverage-section-title">Live Profiling Metrics</div>
+                <div class="profiling-metrics">
+                    <div class="metric-row">
+                        <span class="metric-label">Sampling Rate</span>
+                        <span class="metric-value" id="sampling-rate">0.1%</span>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="sampling-fill" style="width: 10%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Function Calls</span>
+                        <span class="metric-value" id="function-calls">1,234</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Avg Latency</span>
+                        <span class="metric-value" id="avg-latency">12.3ms</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Memory Usage</span>
+                        <span class="metric-value" id="memory-usage">47.2MB</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Test Coverage</span>
+                        <span class="metric-value" id="live-coverage">87.3%</span>
+                    </div>
+                </div>
+                <div class="flame-graph" id="flame-graph"></div>
+            </div>
+
+            <div class="coverage-section">
+                <div class="coverage-section-title">Core Domains</div>
+                <div class="keyword-grid">
+                    <div class="keyword-chip tested profiled" data-keyword="llm" data-coverage="89">llm</div>
+                    <div class="keyword-chip tested" data-keyword="async" data-coverage="76">async</div>
+                    <div class="keyword-chip tested profiled" data-keyword="flow" data-coverage="91">flow</div>
+                    <div class="keyword-chip" data-keyword="temporal" data-coverage="34">temporal</div>
+                </div>
+            </div>
+            
+            <div class="coverage-section">
+                <div class="coverage-section-title">Patterns</div>
+                <div class="keyword-grid">
+                    <div class="keyword-chip tested" data-keyword="cascade" data-coverage="82">cascade</div>
+                    <div class="keyword-chip profiled" data-keyword="entropy" data-coverage="67">entropy</div>
+                    <div class="keyword-chip tested" data-keyword="fold" data-coverage="88">fold</div>
+                    <div class="keyword-chip" data-keyword="unfold" data-coverage="45">unfold</div>
+                </div>
+            </div>
+            
+            <div class="coverage-section">
+                <div class="coverage-section-title">Systems</div>
+                <div class="keyword-grid">
+                    <div class="keyword-chip tested profiled" data-keyword="memoize" data-coverage="93">memoize</div>
+                    <div class="keyword-chip tested" data-keyword="transduce" data-coverage="79">transduce</div>
+                    <div class="keyword-chip" data-keyword="recursive" data-coverage="56">recursive</div>
+                    <div class="keyword-chip profiled" data-keyword="emergence" data-coverage="41">emergence</div>
+                </div>
+            </div>
+            
+            <div class="filter-expression" id="filter-expression">
+                <span id="filter-text">∅</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Architecture panel with test indicators -->
+    <div class="architecture-panel" id="architecture-panel">
+        <div class="arch-header">
+            <div class="arch-title">Predict-O-Matic Layers</div>
+            <div class="arch-subtitle">Test coverage & performance view</div>
+        </div>
+        <div class="arch-content">
+            <div class="layer-item" data-layer="ingestion">
+                <div class="layer-name">
+                    <div class="layer-test-indicator high"></div>
+                    Data Ingestion & Sensing
+                </div>
+                <div class="layer-coverage">91.3%</div>
+                <div class="layer-stats">
+                    <span class="layer-stat">47ms avg</span>
+                    <span class="layer-stat">156 calls/s</span>
+                    <span class="layer-stat">99.2% uptime</span>
+                    <span class="layer-stat">42 tests</span>
+                </div>
+            </div>
+
+            <div class="layer-item" data-layer="processing">
+                <div class="layer-name">
+                    <div class="layer-test-indicator high"></div>
+                    Feature Engineering
+                </div>
+                <div class="layer-coverage">87.6%</div>
+                <div class="layer-stats">
+                    <span class="layer-stat">23ms avg</span>
+                    <span class="layer-stat">89 calls/s</span>
+                    <span class="layer-stat">98.7% uptime</span>
+                    <span class="layer-stat">38 tests</span>
+                </div>
+            </div>
+
+            <div class="layer-item active" data-layer="prediction">
+                <div class="layer-name">
+                    <div class="layer-test-indicator medium"></div>
+                    Prediction & Strategy
+                </div>
+                <div class="layer-coverage">73.9%</div>
+                <div class="layer-stats">
+                    <span class="layer-stat">81ms avg</span>
+                    <span class="layer-stat">34 calls/s</span>
+                    <span class="layer-stat">96.4% uptime</span>
+                    <span class="layer-stat">29 tests</span>
+                </div>
+            </div>
+
+            <div class="layer-item" data-layer="execution">
+                <div class="layer-name">
+                    <div class="layer-test-indicator low"></div>
+                    Economic Agency
+                </div>
+                <div class="layer-coverage">56.2%</div>
+                <div class="layer-stats">
+                    <span class="layer-stat">156ms avg</span>
+                    <span class="layer-stat">12 calls/s</span>
+                    <span class="layer-stat">94.1% uptime</span>
+                    <span class="layer-stat">18 tests</span>
+                </div>
+            </div>
+
+            <div class="layer-item" data-layer="feedback">
+                <div class="layer-name">
+                    <div class="layer-test-indicator high"></div>
+                    Adaptive Learning
+                </div>
+                <div class="layer-coverage">89.7%</div>
+                <div class="layer-stats">
+                    <span class="layer-stat">34ms avg</span>
+                    <span class="layer-stat">67 calls/s</span>
+                    <span class="layer-stat">99.8% uptime</span>
+                    <span class="layer-stat">31 tests</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced info overlay with test data -->
+    <div class="info-overlay" id="info-overlay">
+        <div class="info-title" id="info-title">—</div>
+        <div class="info-subtitle" id="info-subtitle">—</div>
+        <div class="info-stats">
+            <div class="info-stat">
+                <span class="info-stat-label">Test Coverage</span>
+                <span class="info-stat-value" id="info-coverage">—</span>
+            </div>
+            <div class="info-stat">
+                <span class="info-stat-label">Tests Passing</span>
+                <span class="info-stat-value" id="info-tests-passing">—</span>
+            </div>
+            <div class="info-stat">
+                <span class="info-stat-label">Profile Score</span>
+                <span class="info-stat-value" id="info-profile-score">—</span>
+            </div>
+            <div class="info-stat">
+                <span class="info-stat-label">Keywords</span>
+                <span class="info-stat-value" id="info-keywords">—</span>
+            </div>
+            <div class="info-stat">
+                <span class="info-stat-label">Avg Latency</span>
+                <span class="info-stat-value" id="info-latency">—</span>
+            </div>
+            <div class="info-stat">
+                <span class="info-stat-label">API Status</span>
+                <span class="info-stat-value" id="info-api-status">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command palette -->
+    <div class="command-palette" id="command-palette">
+        <input type="text" class="command-input" id="command-input" placeholder="Type a command or search...">
+        <div class="command-results" id="command-results"></div>
+    </div>
+
+    <!-- Test status indicator -->
+    <div class="test-status-indicator" id="test-status-indicator">
+        <div class="test-status-dot"></div>
+        <span class="test-status-text">Tests Running</span>
+        <span class="test-metrics-inline" id="test-metrics-inline">
+            154 passed • 3 failed • 87.3% coverage
+        </span>
+    </div>
+
+    <script>
+        // Enhanced Semantic Explorer with Test Coverage and Profiling
+        class InstrumentedPredictOMaticExplorer {
+            constructor() {
+                this.canvas = document.getElementById('main-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Test and profiling state
+                this.testRunner = {
+                    isRunning: false,
+                    currentTest: null,
+                    results: new Map(),
+                    coverage: {
+                        lines: 87.3,
+                        branches: 82.1,
+                        functions: 73.9,
+                        statements: 91.2
+                    },
+                    suites: []
+                };
+                
+                // Profiling state
+                this.profiler = {
+                    enabled: false,
+                    samples: [],
+                    metrics: {
+                        samplingRate: 0.001,
+                        functionCalls: 0,
+                        avgLatency: 0,
+                        memoryUsage: 0
+                    },
+                    flameGraphData: []
+                };
+                
+                // Viewport
+                this.camera = {
+                    x: 0,
+                    y: 0,
+                    zoom: 1,
+                    targetZoom: 1,
+                    targetX: 0,
+                    targetY: 0
+                };
+                
+                // Interaction state
+                this.mode = 'explore';
+                this.isDragging = false;
+                this.dragStart = {x: 0, y: 0};
+                this.hoveredNode = null;
+                this.selectedNodes = new Set();
+                this.activeFilters = new Set();
+                
+                // Architecture integration
+                this.apiConnected = false;
+                
+                // Physics simulation
+                this.physicsEnabled = true;
+                this.nodes = [];
+                this.edges = [];
+                
+                // Animation
+                this.animationFrame = null;
+                this.time = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupCanvas();
+                this.generateInstrumentedGraph();
+                this.setupEventListeners();
+                this.setupAPIIntegration();
+                this.initTestRunner();
+                this.animate();
+            }
+            
+            setupCanvas() {
+                const resize = () => {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                };
+                resize();
+                window.addEventListener('resize', resize);
+            }
+            
+            generateInstrumentedGraph() {
+                // Create instrumented Predict-O-Matic nodes with test coverage data
+                const nodeData = [
+                    // Layer 1: Data Ingestion & Market Sensing
+                    {id: 'market-feed', label: 'Market Feed', x: 0, y: 0, keywords: ['llm', 'flow', 'temporal'], 
+                     color: 'cyan', layer: 'ingestion', coverage: 89, testsCount: 12, passing: 11},
+                    
+                    {id: 'sentiment-analyzer', label: 'Sentiment', x: 150, y: 0, keywords: ['llm', 'entropy'], 
+                     color: 'cyan', layer: 'ingestion', coverage: 76, testsCount: 8, passing: 8},
+                    
+                    {id: 'news-processor', label: 'News Parser', x: 300, y: 0, keywords: ['llm', 'async'], 
+                     color: 'blue', layer: 'ingestion', coverage: 91, testsCount: 15, passing: 14},
+                    
+                    // Layer 2: Feature Engineering & Processing
+                    {id: 'feature-extractor', label: 'Features', x: 75, y: 130, keywords: ['fold', 'transduce', 'memoize'], 
+                     color: 'green', layer: 'processing', coverage: 82, testsCount: 20, passing: 18},
+                    
+                    {id: 'signal-processor', label: 'Signals', x: 225, y: 130, keywords: ['cascade', 'entropy', 'temporal'], 
+                     color: 'green', layer: 'processing', coverage: 67, testsCount: 14, passing: 12},
+                    
+                    {id: 'pattern-matcher', label: 'Patterns', x: 375, y: 130, keywords: ['recursive', 'emergence'], 
+                     color: 'purple', layer: 'processing', coverage: 88, testsCount: 16, passing: 16},
+                    
+                    // Layer 3: Prediction & Strategy Generation
+                    {id: 'ensemble-predictor', label: 'Ensemble', x: 150, y: 260, keywords: ['llm', 'recursive', 'emergence'], 
+                     color: 'orange', layer: 'prediction', coverage: 93, testsCount: 25, passing: 23},
+                    
+                    {id: 'strategy-generator', label: 'Strategy', x: 300, y: 260, keywords: ['flow', 'unfold', 'async'], 
+                     color: 'orange', layer: 'prediction', coverage: 79, testsCount: 18, passing: 15},
+                    
+                    {id: 'risk-assessor', label: 'Risk Model', x: 450, y: 260, keywords: ['entropy', 'temporal', 'fold'], 
+                     color: 'pink', layer: 'prediction', coverage: 56, testsCount: 12, passing: 8},
+                    
+                    // Layer 4: Economic Agency & Execution  
+                    {id: 'portfolio-manager', label: 'Portfolio', x: 0, y: 390, keywords: ['memoize', 'temporal', 'cascade'], 
+                     color: 'purple', layer: 'execution', coverage: 34, testsCount: 9, passing: 4},
+                    
+                    {id: 'order-executor', label: 'Executor', x: 150, y: 390, keywords: ['async', 'flow'], 
+                     color: 'purple', layer: 'execution', coverage: 45, testsCount: 11, passing: 6},
+                    
+                    {id: 'token-orchestrator', label: 'Tokens', x: 300, y: 390, keywords: ['emergence', 'unfold'], 
+                     color: 'blue', layer: 'execution', coverage: 41, testsCount: 7, passing: 3},
+                    
+                    // Layer 5: Feedback & Adaptive Learning
+                    {id: 'performance-tracker', label: 'Tracking', x: 450, y: 390, keywords: ['temporal', 'memoize'], 
+                     color: 'green', layer: 'feedback', coverage: 87, testsCount: 19, passing: 18},
+                    
+                    {id: 'learning-engine', label: 'Learning', x: 600, y: 390, keywords: ['recursive', 'emergence', 'entropy'], 
+                     color: 'pink', layer: 'feedback', coverage: 73, testsCount: 22, passing: 19},
+                    
+                    // Cross-cutting concerns
+                    {id: 'attention-router', label: 'Attention', x: 600, y: 260, keywords: ['llm', 'cascade', 'flow'], 
+                     color: 'cyan', layer: 'cross-cutting', coverage: 91, testsCount: 13, passing: 13},
+                    
+                    {id: 'memory-cache', label: 'Cache', x: 525, y: 130, keywords: ['memoize', 'temporal'], 
+                     color: 'green', layer: 'cross-cutting', coverage: 95, testsCount: 17, passing: 17}
+                ];
+                
+                // Center the graph
+                const centerX = this.canvas.width / 2 - 300;
+                const centerY = this.canvas.height / 2 - 200;
+                
+                this.nodes = nodeData.map(data => ({
+                    ...data,
+                    x: data.x + centerX,
+                    y: data.y + centerY,
+                    vx: 0,
+                    vy: 0,
+                    radius: 45,
+                    pulsePhase: Math.random() * Math.PI * 2,
+                    profileScore: Math.random() * 100,
+                    lastProfileTime: Date.now() - Math.random() * 10000,
+                    lastTestTime: Date.now() - Math.random() * 30000,
+                    testStatus: data.passing === data.testsCount ? 'pass' : data.passing > data.testsCount * 0.8 ? 'warn' : 'fail'
+                }));
+                
+                // Create edges based on semantic similarity and architectural flow
+                this.edges = [];
+                for (let i = 0; i < this.nodes.length; i++) {
+                    for (let j = i + 1; j < this.nodes.length; j++) {
+                        const node1 = this.nodes[i];
+                        const node2 = this.nodes[j];
+                        const sharedKeywords = node1.keywords.filter(k => node2.keywords.includes(k));
+                        const layerConnection = this.getLayerConnection(node1.layer, node2.layer);
+                        
+                        if (sharedKeywords.length > 0 || layerConnection > 0) {
+                            this.edges.push({
+                                source: node1,
+                                target: node2,
+                                strength: (sharedKeywords.length * 0.3) + (layerConnection * 0.4),
+                                keywords: sharedKeywords,
+                                isArchitectural: layerConnection > 0,
+                                testCoverage: Math.min(node1.coverage, node2.coverage)
+                            });
+                        }
+                    }
+                }
+            }
+            
+            getLayerConnection(layer1, layer2) {
+                const layerOrder = ['ingestion', 'processing', 'prediction', 'execution', 'feedback'];
+                const index1 = layerOrder.indexOf(layer1);
+                const index2 = layerOrder.indexOf(layer2);
+                
+                if (index1 >= 0 && index2 >= 0) {
+                    const diff = Math.abs(index1 - index2);
+                    if (diff === 1) return 1; // Adjacent layers
+                    if (diff === 2) return 0.3; // Skip one layer
+                }
+                
+                if (layer1 === 'cross-cutting' || layer2 === 'cross-cutting') {
+                    return 0.5; // Cross-cutting connects to everything
+                }
+                
+                return 0;
+            }
+            
+            initTestRunner() {
+                // Initialize test suites
+                this.testRunner.suites = [
+                    {
+                        name: 'Semantic Analysis Suite',
+                        tests: ['Node graph construction', 'Edge weight calculation', 'Keyword filtering'],
+                        status: 'passing',
+                        coverage: 91.3
+                    },
+                    {
+                        name: 'Architecture Integration',
+                        tests: ['Layer connectivity', 'API bridge connection', 'Performance metrics'],
+                        status: 'failing',
+                        coverage: 67.8
+                    },
+                    {
+                        name: 'Profiling Engine',
+                        tests: ['Sample collection', 'Flame graph generation', 'Memory tracking'],
+                        status: 'passing',
+                        coverage: 89.2
+                    }
+                ];
+            }
+            
+            setupEventListeners() {
+                // Mouse events
+                this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+                this.canvas.addEventListener('wheel', this.handleWheel.bind(this));
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', this.handleKeyDown.bind(this));
+                
+                // UI controls
+                document.querySelectorAll('.toolbar-button[data-mode]').forEach(btn => {
+                    btn.addEventListener('click', () => this.setMode(btn.dataset.mode));
+                });
+                
+                document.getElementById('test-runner-toggle').addEventListener('click', () => {
+                    this.toggleTestRunner();
+                });
+                
+                document.getElementById('profiling-toggle').addEventListener('click', () => {
+                    this.toggleProfiling();
+                });
+                
+                document.getElementById('architecture-toggle').addEventListener('click', () => {
+                    this.toggleArchitecturePanel();
+                });
+                
+                document.getElementById('coverage-toggle').addEventListener('click', () => {
+                    this.toggleCoveragePanel();
+                });
+                
+                document.getElementById('api-bridge-toggle').addEventListener('click', () => {
+                    this.toggleAPIBridge();
+                });
+                
+                document.getElementById('physics-toggle').addEventListener('click', () => {
+                    this.physicsEnabled = !this.physicsEnabled;
+                    document.getElementById('physics-toggle').classList.toggle('active');
+                });
+                
+                document.getElementById('command-palette-toggle').addEventListener('click', () => {
+                    this.toggleCommandPalette();
+                });
+                
+                document.getElementById('run-tests-btn').addEventListener('click', () => {
+                    this.runTestSuite();
+                });
+                
+                // Filter chips
+                document.querySelectorAll('.keyword-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        const keyword = chip.dataset.keyword;
+                        chip.classList.toggle('active');
+                        
+                        if (this.activeFilters.has(keyword)) {
+                            this.activeFilters.delete(keyword);
+                        } else {
+                            this.activeFilters.add(keyword);
+                        }
+                        
+                        this.updateFilterExpression();
+                    });
+                });
+            }
+            
+            setupAPIIntegration() {
+                // Try to connect to Predict-O-Matic API
+                this.connectToAPI();
+                setInterval(() => this.connectToAPI(), 30000);
+            }
+            
+            async connectToAPI() {
+                try {
+                    const response = await fetch('/api/vessels-status');
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.apiConnected = true;
+                        this.updateAPIData(data);
+                        document.getElementById('api-bridge-toggle').classList.add('active');
+                    }
+                } catch (error) {
+                    this.apiConnected = false;
+                    document.getElementById('api-bridge-toggle').classList.remove('active');
+                    console.log('API not available, using simulated data');
+                }
+                
+                this.updateInfoOverlay(this.hoveredNode);
+            }
+            
+            updateAPIData(data) {
+                // Update nodes with real API data
+                this.nodes.forEach(node => {
+                    if (data.portfolio && node.id === 'portfolio-manager') {
+                        node.apiData = {
+                            value: data.portfolio.total_value,
+                            positions: data.portfolio.positions?.length || 0
+                        };
+                    }
+                });
+            }
+            
+            toggleTestRunner() {
+                this.testRunner.isRunning = !this.testRunner.isRunning;
+                const toggle = document.getElementById('test-runner-toggle');
+                const status = document.getElementById('test-status-indicator');
+                
+                if (this.testRunner.isRunning) {
+                    toggle.classList.add('testing-active');
+                    status.classList.add('active');
+                    this.runContinuousTests();
+                } else {
+                    toggle.classList.remove('testing-active');
+                    status.classList.remove('active');
+                }
+            }
+            
+            toggleProfiling() {
+                this.profiler.enabled = !this.profiler.enabled;
+                const toggle = document.getElementById('profiling-toggle');
+                
+                if (this.profiler.enabled) {
+                    toggle.classList.add('profiling-active');
+                    this.startProfiling();
+                } else {
+                    toggle.classList.remove('profiling-active');
+                    this.stopProfiling();
+                }
+            }
+            
+            toggleCoveragePanel() {
+                // Coverage panel is always visible, this might toggle detailed view
+                const panel = document.getElementById('coverage-panel');
+                // Could implement collapsible sections here
+            }
+            
+            toggleArchitecturePanel() {
+                const panel = document.getElementById('architecture-panel');
+                panel.classList.toggle('visible');
+                document.getElementById('architecture-toggle').classList.toggle('active');
+            }
+            
+            toggleAPIBridge() {
+                if (this.apiConnected) {
+                    this.connectToAPI();
+                } else {
+                    // Simulate API connection
+                    setTimeout(() => {
+                        this.apiConnected = true;
+                        document.getElementById('api-bridge-toggle').classList.add('active');
+                    }, 1000);
+                }
+            }
+            
+            runTestSuite() {
+                const progressBar = document.getElementById('test-progress-fill');
+                let progress = 0;
+                const totalTests = this.nodes.reduce((sum, node) => sum + node.testsCount, 0);
+                
+                progressBar.style.width = '0%';
+                
+                const runInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    progressBar.style.width = Math.min(100, progress) + '%';
+                    
+                    // Simulate test results
+                    this.nodes.forEach(node => {
+                        if (Math.random() < 0.1) { // 10% chance to update
+                            const oldPassing = node.passing;
+                            node.passing = Math.min(node.testsCount, 
+                                node.passing + Math.floor(Math.random() * 3) - 1);
+                            node.lastTestTime = Date.now();
+                            
+                            // Update test status
+                            const passRate = node.passing / node.testsCount;
+                            node.testStatus = passRate === 1 ? 'pass' : 
+                                            passRate > 0.8 ? 'warn' : 'fail';
+                        }
+                    });
+                    
+                    if (progress >= 100) {
+                        clearInterval(runInterval);
+                        this.updateCoverageDisplay();
+                    }
+                }, 200);
+            }
+            
+            runContinuousTests() {
+                if (!this.testRunner.isRunning) return;
+                
+                // Simulate continuous testing
+                setTimeout(() => {
+                    this.runTestSuite();
+                    if (this.testRunner.isRunning) {
+                        setTimeout(() => this.runContinuousTests(), 30000); // Run every 30 seconds
+                    }
+                }, 5000);
+            }
+            
+            startProfiling() {
+                this.profilingInterval = setInterval(() => {
+                    this.collectProfilingData();
+                }, 100);
+            }
+            
+            stopProfiling() {
+                if (this.profilingInterval) {
+                    clearInterval(this.profilingInterval);
+                }
+            }
+            
+            collectProfilingData() {
+                // Simulate profiling data collection
+                this.profiler.metrics.functionCalls += Math.floor(Math.random() * 50);
+                this.profiler.metrics.avgLatency = 8 + Math.random() * 20;
+                this.profiler.metrics.samplingRate = 0.001 + Math.random() * 0.002;
+                this.profiler.metrics.memoryUsage = 40 + Math.random() * 20;
+                
+                // Add to flame graph data
+                this.profiler.samples.push({
+                    timestamp: Date.now(),
+                    function: this.nodes[Math.floor(Math.random() * this.nodes.length)].id,
+                    duration: Math.random() * 100,
+                    layer: Math.floor(Math.random() * 5),
+                    hotness: Math.random()
+                });
+                
+                if (this.profiler.samples.length > 100) {
+                    this.profiler.samples = this.profiler.samples.slice(-100);
+                }
+                
+                this.updateProfilingUI();
+                this.updateFlameGraph();
+                
+                // Update node profile scores
+                this.nodes.forEach(node => {
+                    if (Math.random() < 0.1) { // 10% chance to update each node
+                        node.profileScore = Math.max(0, Math.min(100, 
+                            node.profileScore + (Math.random() - 0.5) * 20));
+                        node.lastProfileTime = Date.now();
+                    }
+                });
+            }
+            
+            updateProfilingUI() {
+                document.getElementById('sampling-rate').textContent = 
+                    (this.profiler.metrics.samplingRate * 100).toFixed(3) + '%';
+                document.getElementById('function-calls').textContent = 
+                    this.profiler.metrics.functionCalls.toLocaleString();
+                document.getElementById('avg-latency').textContent = 
+                    this.profiler.metrics.avgLatency.toFixed(1) + 'ms';
+                document.getElementById('memory-usage').textContent = 
+                    this.profiler.metrics.memoryUsage.toFixed(1) + 'MB';
+                
+                const samplingFill = document.getElementById('sampling-fill');
+                samplingFill.style.width = (this.profiler.metrics.samplingRate * 100 * 10) + '%';
+            }
+            
+            updateFlameGraph() {
+                const container = document.getElementById('flame-graph');
+                container.innerHTML = '';
+                
+                const recentSamples = this.profiler.samples.slice(-30);
+                recentSamples.forEach((sample, i) => {
+                    const bar = document.createElement('div');
+                    bar.className = 'flame-bar';
+                    
+                    // Color based on hotness
+                    if (sample.hotness > 0.7) {
+                        bar.classList.add('hot');
+                    } else if (sample.hotness > 0.4) {
+                        bar.classList.add('warm');
+                    } else {
+                        bar.classList.add('cool');
+                    }
+                    
+                    bar.style.left = (i * 3.3) + '%';
+                    bar.style.width = '3%';
+                    bar.style.bottom = (sample.layer * 12) + 'px';
+                    bar.title = `${sample.function}: ${sample.duration.toFixed(1)}ms`;
+                    
+                    container.appendChild(bar);
+                });
+            }
+            
+            updateCoverageDisplay() {
+                // Recalculate coverage based on node test results
+                const totalTests = this.nodes.reduce((sum, node) => sum + node.testsCount, 0);
+                const passingTests = this.nodes.reduce((sum, node) => sum + node.passing, 0);
+                const overallCoverage = (passingTests / totalTests) * 100;
+                
+                // Update coverage metrics
+                this.testRunner.coverage.lines = Math.min(95, overallCoverage + Math.random() * 5);
+                this.testRunner.coverage.branches = Math.min(90, overallCoverage - 5 + Math.random() * 10);
+                this.testRunner.coverage.functions = Math.min(88, overallCoverage - 10 + Math.random() * 15);
+                this.testRunner.coverage.statements = Math.min(98, overallCoverage + 3 + Math.random() * 3);
+                
+                // Update UI
+                document.getElementById('line-coverage').textContent = this.testRunner.coverage.lines.toFixed(1) + '%';
+                document.getElementById('branch-coverage').textContent = this.testRunner.coverage.branches.toFixed(1) + '%';
+                document.getElementById('function-coverage').textContent = this.testRunner.coverage.functions.toFixed(1) + '%';
+                document.getElementById('statement-coverage').textContent = this.testRunner.coverage.statements.toFixed(1) + '%';
+                
+                // Update coverage value colors
+                this.updateCoverageColors();
+                
+                // Update test count
+                const failingTests = totalTests - passingTests;
+                document.getElementById('test-count').textContent = 
+                    `${passingTests} tests passed, ${failingTests} failed`;
+                
+                document.getElementById('test-metrics-inline').textContent = 
+                    `${passingTests} passed • ${failingTests} failed • ${overallCoverage.toFixed(1)}% coverage`;
+            }
+            
+            updateCoverageColors() {
+                const updateColor = (id, value) => {
+                    const element = document.getElementById(id);
+                    element.className = 'coverage-value ';
+                    if (value >= 80) element.className += 'high';
+                    else if (value >= 60) element.className += 'medium';
+                    else element.className += 'low';
+                };
+                
+                updateColor('line-coverage', this.testRunner.coverage.lines);
+                updateColor('branch-coverage', this.testRunner.coverage.branches);
+                updateColor('function-coverage', this.testRunner.coverage.functions);
+                updateColor('statement-coverage', this.testRunner.coverage.statements);
+            }
+            
+            draw() {
+                // Clear canvas with gradient background
+                const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+                gradient.addColorStop(0, 'hsl(200, 25%, 10%)');
+                gradient.addColorStop(1, 'hsl(200, 30%, 8%)');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update camera smoothly
+                const cameraSpeed = 0.1;
+                this.camera.x += (this.camera.targetX - this.camera.x) * cameraSpeed;
+                this.camera.y += (this.camera.targetY - this.camera.y) * cameraSpeed;
+                this.camera.zoom += (this.camera.targetZoom - this.camera.zoom) * cameraSpeed;
+                
+                // Save context and apply camera transform
+                this.ctx.save();
+                this.ctx.translate(this.camera.x, this.camera.y);
+                this.ctx.scale(this.camera.zoom, this.camera.zoom);
+                
+                // Draw edges with test coverage visualization
+                this.edges.forEach(edge => {
+                    // Check if edge should be visible based on filters
+                    let visible = this.activeFilters.size === 0;
+                    if (!visible) {
+                        visible = edge.keywords.some(k => this.activeFilters.has(k));
+                    }
+                    
+                    if (visible) {
+                        this.ctx.globalAlpha = this.selectedNodes.has(edge.source) || 
+                                              this.selectedNodes.has(edge.target) ? 0.8 : 0.4;
+                        
+                        // Color based on test coverage
+                        let edgeColor;
+                        if (edge.testCoverage > 80) {
+                            edgeColor = 'hsl(150, 80%, 50%)'; // High coverage - green
+                        } else if (edge.testCoverage > 60) {
+                            edgeColor = 'hsl(60, 100%, 50%)'; // Medium coverage - yellow
+                        } else {
+                            edgeColor = 'hsl(0, 80%, 50%)'; // Low coverage - red
+                        }
+                        
+                        if (edge.isArchitectural) {
+                            this.ctx.strokeStyle = 'hsl(45, 100%, 60%)'; // Predict-O-Matic gold
+                            this.ctx.lineWidth = 3;
+                            this.ctx.setLineDash([5, 5]);
+                        } else {
+                            this.ctx.strokeStyle = edgeColor;
+                            this.ctx.lineWidth = 2;
+                            this.ctx.setLineDash([]);
+                        }
+                        
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(edge.source.x, edge.source.y);
+                        this.ctx.lineTo(edge.target.x, edge.target.y);
+                        this.ctx.stroke();
+                    }
+                });
+                
+                this.ctx.setLineDash([]); // Reset line dash
+                
+                // Draw nodes with test status indicators
+                this.nodes.forEach(node => {
+                    // Check filter visibility
+                    let visible = this.activeFilters.size === 0;
+                    if (!visible) {
+                        visible = node.keywords.some(k => this.activeFilters.has(k));
+                    }
+                    
+                    this.ctx.globalAlpha = visible ? 1 : 0.3;
+                    
+                    // Pulse effect based on test results and profiling
+                    const timeSinceTest = Date.now() - node.lastTestTime;
+                    const testPulse = Math.max(0, 1 - timeSinceTest / 10000); // Fade over 10 seconds
+                    
+                    const timeSinceProfile = Date.now() - node.lastProfileTime;
+                    const profilePulse = Math.max(0, 1 - timeSinceProfile / 5000); // Fade over 5 seconds
+                    
+                    const pulse = Math.sin(this.time * 0.003 + node.pulsePhase) * 0.15 + 1;
+                    const radius = node.radius * (this.hoveredNode === node ? 1.15 : 1) * 
+                                  (this.selectedNodes.has(node) ? pulse : 1) *
+                                  (testPulse > 0 ? 1 + testPulse * 0.1 : 1) *
+                                  (this.profiler.enabled && profilePulse > 0 ? 1 + profilePulse * 0.2 : 1);
+                    
+                    // Node background with test coverage coloring
+                    const gradient = this.ctx.createRadialGradient(
+                        node.x, node.y, 0,
+                        node.x, node.y, radius
+                    );
+                    
+                    let hue;
+                    if (node.coverage >= 80) {
+                        hue = 150; // Green for good coverage
+                    } else if (node.coverage >= 60) {
+                        hue = 60;  // Yellow for medium coverage
+                    } else {
+                        hue = 0;   // Red for poor coverage
+                    }
+                    
+                    // Add test result glow effect
+                    if (testPulse > 0) {
+                        const testColor = node.testStatus === 'pass' ? 150 : 
+                                        node.testStatus === 'warn' ? 60 : 0;
+                        gradient.addColorStop(0, `hsla(${testColor}, 80%, 60%, ${testPulse * 0.4})`);
+                        gradient.addColorStop(0.7, `hsla(${hue}, 80%, 50%, 0.3)`);
+                        gradient.addColorStop(1, `hsla(${hue}, 80%, 35%, 0.1)`);
+                    } else {
+                        gradient.addColorStop(0, `hsla(${hue}, 80%, 50%, 0.3)`);
+                        gradient.addColorStop(1, `hsla(${hue}, 80%, 35%, 0.1)`);
+                    }
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Node border with test status
+                    const borderColor = testPulse > 0 ? 
+                        (node.testStatus === 'pass' ? 'hsl(150, 80%, 50%)' :
+                         node.testStatus === 'warn' ? 'hsl(60, 100%, 50%)' : 'hsl(0, 80%, 50%)') :
+                        `hsla(${hue}, 80%, 50%, ${visible ? 0.8 : 0.3})`;
+                    
+                    this.ctx.strokeStyle = borderColor;
+                    this.ctx.lineWidth = this.selectedNodes.has(node) ? 4 : 2;
+                    this.ctx.stroke();
+                    
+                    // Test coverage ring
+                    if (node.coverage !== undefined) {
+                        const coverageRadius = radius + 6;
+                        const coverageAngle = (node.coverage / 100) * Math.PI * 2 - Math.PI / 2;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(node.x, node.y, coverageRadius, -Math.PI / 2, coverageAngle);
+                        this.ctx.strokeStyle = `hsl(${hue}, 80%, 60%)`;
+                        this.ctx.lineWidth = 3;
+                        this.ctx.stroke();
+                    }
+                    
+                    // Profile score indicator
+                    if (this.profiler.enabled && node.profileScore !== undefined) {
+                        const scoreRadius = radius + 12;
+                        const scoreAngle = (node.profileScore / 100) * Math.PI * 2 - Math.PI / 2;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(node.x, node.y, scoreRadius, -Math.PI / 2, scoreAngle);
+                        this.ctx.strokeStyle = 'hsl(45, 100%, 60%)';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                    }
+                    
+                    // API data indicator
+                    if (this.apiConnected && node.apiData) {
+                        const indicator = this.ctx.createRadialGradient(
+                            node.x + radius - 10, node.y - radius + 10, 0,
+                            node.x + radius - 10, node.y - radius + 10, 8
+                        );
+                        indicator.addColorStop(0, 'hsl(150, 80%, 50%)');
+                        indicator.addColorStop(1, 'hsl(150, 80%, 30%)');
+                        
+                        this.ctx.fillStyle = indicator;
+                        this.ctx.beginPath();
+                        this.ctx.arc(node.x + radius - 10, node.y - radius + 10, 6, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                    
+                    // Test count indicator
+                    if (node.testsCount) {
+                        this.ctx.fillStyle = 'hsla(200, 20%, 90%, 0.9)';
+                        this.ctx.font = '10px JetBrains Mono';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText(
+                            `${node.passing}/${node.testsCount}`, 
+                            node.x + radius - 8, 
+                            node.y - radius + 5
+                        );
+                    }
+                    
+                    // Node label
+                    this.ctx.fillStyle = visible ? 'hsl(200, 20%, 93%)' : 'hsl(200, 20%, 60%)';
+                    this.ctx.font = this.selectedNodes.has(node) ? 'bold 14px Inter' : '14px Inter';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(node.label, node.x, node.y);
+                    
+                    // Coverage percentage
+                    if (node.coverage !== undefined) {
+                        this.ctx.font = '10px JetBrains Mono';
+                        this.ctx.fillStyle = 'hsla(200, 20%, 80%, 0.7)';
+                        this.ctx.fillText(node.coverage + '%', node.x, node.y + 20);
+                    }
+                });
+                
+                this.ctx.restore();
+            }
+            
+            animate() {
+                this.time++;
+                if (this.physicsEnabled) {
+                    this.updatePhysics();
+                }
+                this.draw();
+                this.animationFrame = requestAnimationFrame(() => this.animate());
+            }
+            
+            updatePhysics() {
+                const damping = 0.95;
+                const repulsion = 8000;
+                const attraction = 0.002;
+                
+                // Reset forces
+                this.nodes.forEach(node => {
+                    node.fx = 0;
+                    node.fy = 0;
+                });
+                
+                // Repulsion between nodes
+                for (let i = 0; i < this.nodes.length; i++) {
+                    for (let j = i + 1; j < this.nodes.length; j++) {
+                        const node1 = this.nodes[i];
+                        const node2 = this.nodes[j];
+                        
+                        const dx = node2.x - node1.x;
+                        const dy = node2.y - node1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist > 0 && dist < 250) {
+                            const force = repulsion / (dist * dist);
+                            const fx = (dx / dist) * force;
+                            const fy = (dy / dist) * force;
+                            
+                            node1.fx -= fx;
+                            node1.fy -= fy;
+                            node2.fx += fx;
+                            node2.fy += fy;
+                        }
+                    }
+                }
+                
+                // Spring forces for edges
+                this.edges.forEach(edge => {
+                    const dx = edge.target.x - edge.source.x;
+                    const dy = edge.target.y - edge.source.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const idealDist = edge.isArchitectural ? 120 : 160;
+                    
+                    if (dist > 0) {
+                        const force = (dist - idealDist) * attraction * edge.strength;
+                        const fx = (dx / dist) * force;
+                        const fy = (dy / dist) * force;
+                        
+                        edge.source.fx += fx;
+                        edge.source.fy += fy;
+                        edge.target.fx -= fx;
+                        edge.target.fy -= fy;
+                    }
+                });
+                
+                // Apply forces
+                this.nodes.forEach(node => {
+                    node.vx = (node.vx + node.fx) * damping;
+                    node.vy = (node.vy + node.fy) * damping;
+                    
+                    node.x += node.vx;
+                    node.y += node.vy;
+                });
+            }
+            
+            // Mouse event handlers
+            handleMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const worldPos = this.screenToWorld(x, y);
+                const clickedNode = this.getNodeAt(worldPos.x, worldPos.y);
+                
+                if (clickedNode) {
+                    if (this.mode === 'explore') {
+                        this.selectNode(clickedNode);
+                    } else if (this.mode === 'test') {
+                        this.runNodeTests(clickedNode);
+                    } else if (this.mode === 'profile') {
+                        this.profileNode(clickedNode);
+                    }
+                } else {
+                    this.isDragging = true;
+                    this.dragStart = {x: e.clientX, y: e.clientY};
+                    this.canvas.style.cursor = 'grabbing';
+                }
+            }
+            
+            handleMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (this.isDragging) {
+                    const dx = e.clientX - this.dragStart.x;
+                    const dy = e.clientY - this.dragStart.y;
+                    
+                    this.camera.targetX += dx / this.camera.zoom;
+                    this.camera.targetY += dy / this.camera.zoom;
+                    
+                    this.dragStart = {x: e.clientX, y: e.clientY};
+                } else {
+                    const worldPos = this.screenToWorld(x, y);
+                    const hoveredNode = this.getNodeAt(worldPos.x, worldPos.y);
+                    
+                    if (hoveredNode !== this.hoveredNode) {
+                        this.hoveredNode = hoveredNode;
+                        this.updateInfoOverlay(hoveredNode);
+                        this.canvas.style.cursor = hoveredNode ? 'pointer' : 'grab';
+                    }
+                }
+            }
+            
+            handleMouseUp(e) {
+                this.isDragging = false;
+                this.canvas.style.cursor = this.hoveredNode ? 'pointer' : 'grab';
+            }
+            
+            handleWheel(e) {
+                e.preventDefault();
+                
+                const delta = -e.deltaY * 0.001;
+                const newZoom = Math.max(0.5, Math.min(3, this.camera.targetZoom + delta));
+                
+                // Zoom towards mouse position
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const worldPos = this.screenToWorld(x, y);
+                
+                const zoomRatio = newZoom / this.camera.targetZoom;
+                this.camera.targetX = worldPos.x - (worldPos.x - this.camera.targetX) * zoomRatio;
+                this.camera.targetY = worldPos.y - (worldPos.y - this.camera.targetY) * zoomRatio;
+                this.camera.targetZoom = newZoom;
+            }
+            
+            handleKeyDown(e) {
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    this.resetCamera();
+                } else if (e.key === 't' || e.key === 'T') {
+                    this.toggleTestRunner();
+                } else if (e.key === 'p' || e.key === 'P') {
+                    this.toggleProfiling();
+                } else if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    this.toggleCommandPalette();
+                }
+            }
+            
+            setMode(mode) {
+                this.mode = mode;
+                document.querySelectorAll('.toolbar-button[data-mode]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === mode);
+                });
+            }
+            
+            selectNode(node) {
+                this.selectedNodes.clear();
+                this.selectedNodes.add(node);
+                this.updateInfoOverlay(node);
+            }
+            
+            runNodeTests(node) {
+                // Simulate running tests for a specific node
+                node.lastTestTime = Date.now();
+                
+                // Animate test execution
+                setTimeout(() => {
+                    const success = Math.random() > 0.2; // 80% success rate
+                    if (success) {
+                        node.passing = Math.min(node.testsCount, node.passing + 1);
+                        node.testStatus = 'pass';
+                    } else {
+                        node.passing = Math.max(0, node.passing - 1);
+                        node.testStatus = 'fail';
+                    }
+                    
+                    // Update coverage
+                    node.coverage = Math.min(100, (node.passing / node.testsCount) * 100 + Math.random() * 10);
+                    
+                    this.updateCoverageDisplay();
+                }, 1000);
+                
+                this.selectNode(node);
+            }
+            
+            profileNode(node) {
+                // Trigger detailed profiling for this node
+                node.profileScore = Math.random() * 100;
+                node.lastProfileTime = Date.now();
+                this.selectNode(node);
+            }
+            
+            resetCamera() {
+                this.camera.targetX = 0;
+                this.camera.targetY = 0;
+                this.camera.targetZoom = 1;
+            }
+            
+            updateFilterExpression() {
+                const expression = this.activeFilters.size > 0 
+                    ? `(${Array.from(this.activeFilters).map(k => `:${k}`).join(' ')})`
+                    : '∅';
+                document.getElementById('filter-text').textContent = expression;
+            }
+            
+            updateInfoOverlay(node) {
+                const overlay = document.getElementById('info-overlay');
+                
+                if (node) {
+                    document.getElementById('info-title').textContent = node.label;
+                    document.getElementById('info-subtitle').textContent = `${node.id} • ${node.layer}`;
+                    document.getElementById('info-coverage').textContent = `${node.coverage}%`;
+                    document.getElementById('info-tests-passing').textContent = `${node.passing}/${node.testsCount}`;
+                    document.getElementById('info-profile-score').textContent = 
+                        `${Math.round(node.profileScore)}%`;
+                    document.getElementById('info-keywords').textContent = node.keywords.join(', ');
+                    document.getElementById('info-latency').textContent = 
+                        `${Math.round((Date.now() - node.lastProfileTime) / 1000)}s ago`;
+                    document.getElementById('info-api-status').textContent = 
+                        this.apiConnected ? 'Connected' : 'Simulated';
+                    
+                    overlay.classList.add('visible');
+                } else {
+                    overlay.classList.remove('visible');
+                }
+            }
+            
+            toggleCommandPalette() {
+                const palette = document.getElementById('command-palette');
+                const input = document.getElementById('command-input');
+                
+                palette.classList.toggle('visible');
+                if (palette.classList.contains('visible')) {
+                    input.focus();
+                    input.value = '';
+                }
+            }
+            
+            getNodeAt(x, y) {
+                for (const node of this.nodes) {
+                    const dx = x - node.x;
+                    const dy = y - node.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < node.radius) {
+                        return node;
+                    }
+                }
+                return null;
+            }
+            
+            screenToWorld(x, y) {
+                return {
+                    x: (x - this.camera.x) / this.camera.zoom,
+                    y: (y - this.camera.y) / this.camera.zoom
+                };
+            }
+        }
+        
+        // Initialize the instrumented explorer
+        const explorer = new InstrumentedPredictOMaticExplorer();
+        
+        // Enhanced command palette functionality
+        const commandPalette = document.getElementById('command-palette');
+        const commandInput = document.getElementById('command-input');
+        const commandResults = document.getElementById('command-results');
+        
+        const commands = [
+            {
+                name: 'Run All Tests',
+                description: 'Execute complete test suite',
+                icon: '🧪',
+                action: () => explorer.runTestSuite()
+            },
+            {
+                name: 'Start Profiling',
+                description: 'Begin live performance monitoring',
+                icon: '📊',
+                action: () => {
+                    if (!explorer.profiler.enabled) {
+                        explorer.toggleProfiling();
+                    }
+                }
+            },
+            {
+                name: 'Coverage Report',
+                description: 'Generate detailed coverage report',
+                icon: '📈',
+                action: () => explorer.updateCoverageDisplay()
+            },
+            {
+                name: 'Focus on Layer',
+                description: 'Navigate to architectural layer',
+                icon: '🏗️',
+                action: (layer) => explorer.focusOnLayer(layer || 'prediction')
+            },
+            {
+                name: 'Connect to API',
+                description: 'Bridge to Predict-O-Matic systems',
+                icon: '🌉',
+                action: () => explorer.toggleAPIBridge()
+            },
+            {
+                name: 'Reset View',
+                description: 'Return to overview',
+                icon: '🎯',
+                action: () => explorer.resetCamera()
+            }
+        ];
+        
+        commandInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = commands.filter(cmd => 
+                cmd.name.toLowerCase().includes(query) ||
+                cmd.description.toLowerCase().includes(query)
+            );
+            
+            commandResults.innerHTML = filtered.map(cmd => `
+                <div class="command-item" data-command="${cmd.name}">
+                    <div class="command-icon">${cmd.icon}</div>
+                    <div class="command-text">
+                        <div class="command-name">${cmd.name}</div>
+                        <div class="command-description">${cmd.description}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click handlers
+            commandResults.querySelectorAll('.command-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const cmdName = item.dataset.command;
+                    const cmd = commands.find(c => c.name === cmdName);
+                    if (cmd) {
+                        cmd.action();
+                        commandPalette.classList.remove('visible');
+                    }
+                });
+            });
+        });
+        
+        // Initial command population
+        commandInput.dispatchEvent(new Event('input'));
+        
+        // Simulate periodic API integration
+        setInterval(() => {
+            if (explorer.apiConnected) {
+                // Update live metrics from API
+                explorer.nodes.forEach(node => {
+                    if (Math.random() < 0.1) {
+                        node.coverage = Math.max(30, Math.min(100, 
+                            node.coverage + (Math.random() - 0.5) * 5));
+                    }
+                });
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

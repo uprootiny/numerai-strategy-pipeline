@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Project Router</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .current-context {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .current-context h2 {
+            color: white;
+        }
+        
+        .context-info {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .context-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .project-grid {
+            display: grid;
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .project-card {
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+        
+        .project-card:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.2);
+        }
+        
+        .project-card.active {
+            border-color: #4facfe;
+            background: #f0f9ff;
+        }
+        
+        .project-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .project-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .project-status {
+            font-size: 1.2rem;
+        }
+        
+        .project-path {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        
+        .project-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .tool-tag {
+            background: #e1e8ed;
+            color: #555;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .priority-high { border-left: 4px solid #ff6b6b; }
+        .priority-medium { border-left: 4px solid #4ecdc4; }
+        .priority-low { border-left: 4px solid #95a5a6; }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #555;
+            border: 1px solid #dee2e6;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .routing-log {
+            grid-column: 1 / -1;
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        
+        .timestamp {
+            color: #6c7086;
+        }
+        
+        .route-info {
+            color: #74c7ec;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔀 Claude Project Router</h1>
+            <p>Intelligent context switching across multiple development projects</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="panel current-context">
+                <h2>🎯 Financial Vessel Context</h2>
+                <div class="context-info">
+                    <div class="context-item">
+                        <span>📁</span>
+                        <div>
+                            <strong>Project:</strong>
+                            <span id="current-project">numerai-pipeline</span>
+                        </div>
+                    </div>
+                    <div class="context-item">
+                        <span>📍</span>
+                        <div>
+                            <strong>Path:</strong>
+                            <code id="current-path">/var/www/strategy.uprootiny.dev/numerai-pipeline</code>
+                        </div>
+                    </div>
+                    <div class="context-item">
+                        <span>🔧</span>
+                        <div>
+                            <strong>Tools:</strong>
+                            <span id="current-tools">python,uv,pytest,jupyter,ml</span>
+                        </div>
+                    </div>
+                    <div class="context-item">
+                        <span>💰</span>
+                        <div>
+                            <strong>Strategic Value:</strong>
+                            <span id="current-strategic-value">0.85</span>
+                        </div>
+                    </div>
+                    <div class="context-item">
+                        <span>🎯</span>
+                        <div>
+                            <strong>Attention Multiplier:</strong>
+                            <span id="current-attention">3.2x</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="refreshContext()">🔄 Refresh</button>
+                    <button class="btn btn-secondary" onclick="openTerminal()">💻 Terminal</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>🗂️ Available Projects</h2>
+                <div class="project-grid" id="projects-container">
+                    <!-- Projects will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="panel routing-log">
+                <h2>📋 Routing Log</h2>
+                <div class="log-container" id="routing-log">
+                    <div class="log-entry">
+                        <span class="timestamp">[2025-09-07 02:30:15]</span>
+                        <span class="route-info">CONTEXT_SWITCH: -> numerai (path: /var/www/strategy.uprootiny.dev/numerai-pipeline, priority: high)</span>
+                    </div>
+                    <div class="log-entry">
+                        <span class="timestamp">[2025-09-07 02:30:10]</span>
+                        <span class="route-info">ROUTE: ./model_uprootiny.py -> numerai (python+numerai)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+    
+    <script>
+        const projects = {
+            numerai: {
+                name: 'Numerai Pipeline',
+                path: '/var/www/strategy.uprootiny.dev/numerai-pipeline',
+                tools: 'python,uv,pytest,jupyter,ml',
+                priority: 'high',
+                status: '🟢',
+                description: 'ML prediction system with polyglot features'
+            },
+            phoenix: {
+                name: 'Phoenix Live',
+                path: '/var/www/phoenix-live',
+                tools: 'elixir,mix,liveview,ecto',
+                priority: 'medium',
+                status: '🟢',
+                description: 'Elixir Phoenix LiveView applications'
+            },
+            haskell: {
+                name: 'Haskell Tournament',
+                path: '/var/www/repositories/numerai-haskell-tournament',
+                tools: 'ghc,cabal,stack,hlint',
+                priority: 'medium', 
+                status: '🟢',
+                description: 'Haskell-based tournament models'
+            },
+            rust: {
+                name: 'Performance Monitor',
+                path: '/var/www/performance-monitor-rs',
+                tools: 'cargo,rustc,clippy,rustfmt',
+                priority: 'medium',
+                status: '🟢',
+                description: 'Rust performance monitoring tools'
+            },
+            backtesting: {
+                name: 'Backtesting Engine',
+                path: '/var/www/elixir-backtesting-engine.uprootiny.dev',
+                tools: 'elixir,mix,genserver',
+                priority: 'medium',
+                status: '🟢',
+                description: 'Elixir backtesting and strategy evaluation'
+            },
+            pythia: {
+                name: 'Pythia TDA Core',
+                path: '/tmp/pythia-demo',
+                tools: 'python,pandas,numpy,analysis',
+                priority: 'high',
+                status: '🟢',
+                description: 'Python trading and analysis core'
+            },
+            substance: {
+                name: 'Substance',
+                path: '/var/www/substance',
+                tools: 'utilities,bash,scripts',
+                priority: 'low',
+                status: '🟢',
+                description: 'Core utilities and shared libraries'
+            },
+            docs: {
+                name: 'Enhanced Docs',
+                path: '/var/www/enhanced-docs-browser',
+                tools: 'markdown,search,git',
+                priority: 'low',
+                status: '🟢',
+                description: 'Documentation and knowledge management'
+            },
+            wedding: {
+                name: 'Wedding Site',
+                path: '/var/www/eliot-wedding.hyperstitious.art',
+                tools: 'html,css,js,frontend',
+                priority: 'low',
+                status: '🟢',
+                description: 'Wedding website and event management'
+            }
+        };
+        
+        let currentProject = 'numerai';
+        
+        function loadProjects() {
+            const container = document.getElementById('projects-container');
+            container.innerHTML = '';
+            
+            Object.keys(projects).forEach(projectKey => {
+                const project = projects[projectKey];
+                const card = document.createElement('div');
+                card.className = `project-card priority-${project.priority}`;
+                if (projectKey === currentProject) {
+                    card.classList.add('active');
+                }
+                
+                card.innerHTML = `
+                    <div class="project-header">
+                        <div class="project-name">${project.name}</div>
+                        <div class="project-status">${project.status}</div>
+                    </div>
+                    <div class="project-path">${project.path}</div>
+                    <div class="project-tools">
+                        ${project.tools.split(',').map(tool => 
+                            `<span class="tool-tag">${tool.trim()}</span>`
+                        ).join('')}
+                    </div>
+                `;
+                
+                card.onclick = () => switchProject(projectKey);
+                container.appendChild(card);
+            });
+        }
+        
+        function switchProject(projectKey) {
+            if (!projects[projectKey]) return;
+            
+            const oldProject = currentProject;
+            currentProject = projectKey;
+            
+            // Update UI
+            updateCurrentContext();
+            loadProjects();
+            
+            // Log the switch
+            addLogEntry(`CONTEXT_SWITCH: ${oldProject} -> ${projectKey} (path: ${projects[projectKey].path}, priority: ${projects[projectKey].priority})`);
+            
+            // Show toast
+            showToast(`Switched to ${projects[projectKey].name}`);
+            
+            // Actually switch context via shell script
+            executeContextSwitch(projectKey);
+        }
+        
+        function updateCurrentContext() {
+            const project = projects[currentProject];
+            document.getElementById('current-project').textContent = project.name;
+            document.getElementById('current-path').textContent = project.path;
+            document.getElementById('current-tools').textContent = project.tools;
+            document.getElementById('current-priority').textContent = project.priority;
+        }
+        
+        function addLogEntry(message) {
+            const logContainer = document.getElementById('routing-log');
+            const timestamp = new Date().toLocaleString('sv-SE').replace('T', ' ');
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <span class="route-info">${message}</span>
+            `;
+            
+            logContainer.insertBefore(entry, logContainer.firstChild);
+            
+            // Keep only last 10 entries
+            while (logContainer.children.length > 10) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        function refreshContext() {
+            // Simulate API call to get current context
+            showToast('Context refreshed');
+            addLogEntry('REFRESH: Context information updated');
+        }
+        
+        function openTerminal() {
+            const project = projects[currentProject];
+            showToast(`Opening terminal in ${project.name}`);
+            addLogEntry(`TERMINAL: Opened terminal in ${project.path}`);
+            
+            // In a real implementation, this would open a terminal or redirect
+            window.open(`/terminal?path=${encodeURIComponent(project.path)}`, '_blank');
+        }
+        
+        async function executeContextSwitch(projectKey) {
+            try {
+                const response = await fetch(`http://localhost:8889/api/switch-context/${projectKey}`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Context switch failed');
+                }
+                
+                const result = await response.json();
+                addLogEntry(`VESSEL: Switched to ${result.vessel_type} (strategic value: ${result.strategic_value})`);
+                addLogEntry(`SYNERGIES: Available synergies with ${result.synergies?.join(', ') || 'none'}`);
+            } catch (error) {
+                addLogEntry(`ERROR: Context switch failed - ${error.message}`);
+                showToast('⚠️ Context switch failed - check Babashka backend on :8889');
+            }
+        }
+        
+        async function loadFinancialVesselsStatus() {
+            try {
+                const response = await fetch('http://localhost:8889/api/vessels-status');
+                const status = await response.json();
+                
+                addLogEntry(`PORTFOLIO: Total value ${status.portfolio_value.toFixed(2)}, attention capacity ${status.total_attention_capacity.toFixed(1)}x`);
+                addLogEntry(`PREDICT-O-MATIC: Alignment score ${(status.predict_o_matic_alignment.alignment_score * 100).toFixed(1)}%`);
+                
+                return status;
+            } catch (error) {
+                console.error('Failed to load vessels status:', error);
+                return null;
+            }
+        }
+        
+        // Detect project based on current URL/path
+        function detectCurrentProject() {
+            const path = window.location.pathname;
+            
+            // Simple detection based on URL
+            for (const [key, project] of Object.entries(projects)) {
+                if (path.includes(key) || window.location.href.includes(project.path.split('/').pop())) {
+                    return key;
+                }
+            }
+            
+            return 'numerai'; // Default
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-detect current project if possible
+            currentProject = detectCurrentProject();
+            
+            loadProjects();
+            updateCurrentContext();
+            
+            // Add some initial log entries
+            addLogEntry('UI: Claude Project Router initialized');
+            addLogEntry(`DETECTED: Auto-detected project context as ${currentProject}`);
+            
+            // Auto-refresh log every 30 seconds
+            setInterval(() => {
+                // In real implementation, fetch latest log entries
+                addLogEntry('HEARTBEAT: Router system operational');
+            }, 30000);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                const projectKeys = Object.keys(projects);
+                const numbers = '123456789';
+                const index = numbers.indexOf(e.key);
+                
+                if (index !== -1 && index < projectKeys.length) {
+                    e.preventDefault();
+                    switchProject(projectKeys[index]);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

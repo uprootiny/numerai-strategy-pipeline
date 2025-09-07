@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict-O-Matic: Live Architectural Walkthrough</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e6f1;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .architecture-container {
+            width: 100%;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00ff88, #00bbff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .vessel-diagram {
+            position: relative;
+            width: 100%;
+            height: 800px;
+            margin: 40px 0;
+        }
+        
+        .layer {
+            position: absolute;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .layer:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(0, 255, 136, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.1);
+        }
+        
+        .layer-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #00ff88;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .component {
+            display: inline-block;
+            background: rgba(0, 187, 255, 0.1);
+            border: 1px solid rgba(0, 187, 255, 0.3);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .component:hover {
+            background: rgba(0, 187, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .component.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: rgba(0, 255, 136, 0.5);
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 136, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.8); }
+        }
+        
+        .signal-flow {
+            position: absolute;
+            width: 2px;
+            background: linear-gradient(180deg, transparent, #00ff88, transparent);
+            animation: flow 2s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes flow {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        
+        .control-panel {
+            position: fixed;
+            right: 20px;
+            top: 100px;
+            width: 350px;
+            background: rgba(10, 14, 39, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            z-index: 100;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .control-section {
+            margin-bottom: 25px;
+        }
+        
+        .control-section h3 {
+            color: #00bbff;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .control-item {
+            margin: 10px 0;
+        }
+        
+        .control-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #a0aabf;
+        }
+        
+        .control-item input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .control-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00ff88;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .metric-display {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #a0aabf;
+        }
+        
+        .inset-panel {
+            position: absolute;
+            background: rgba(10, 14, 39, 0.98);
+            border: 1px solid rgba(0, 255, 136, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 200px;
+            display: none;
+            z-index: 50;
+        }
+        
+        .inset-panel.visible {
+            display: block;
+        }
+        
+        .inset-panel h4 {
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+        
+        .data-stream {
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #00ff88;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            border-radius: 4px;
+            margin: 5px 0;
+            height: 60px;
+            overflow-y: auto;
+        }
+        
+        .navigation-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .nav-tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-tab.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: rgba(0, 255, 136, 0.5);
+        }
+        
+        .flow-indicator {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, #00ff88, transparent);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: moveFlow 4s linear infinite;
+        }
+        
+        @keyframes moveFlow {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(10, 14, 39, 0.98);
+            border: 1px solid rgba(0, 255, 136, 0.5);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9em;
+            display: none;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .layer-1 { top: 0; height: 150px; }
+        .layer-2 { top: 170px; height: 150px; }
+        .layer-3 { top: 340px; height: 150px; }
+        .layer-4 { top: 510px; height: 150px; }
+        .layer-5 { top: 680px; height: 120px; }
+    </style>
+</head>
+<body>
+    <div class="architecture-container">
+        <div class="header">
+            <h1>🚀 PREDICT-O-MATIC VESSEL</h1>
+            <p>Live Architectural Signal Flow Walkthrough</p>
+            <div class="navigation-tabs">
+                <div class="nav-tab active" data-view="architecture">Architecture</div>
+                <div class="nav-tab" data-view="signal">Signal Flow</div>
+                <div class="nav-tab" data-view="economics">Economics</div>
+                <div class="nav-tab" data-view="attention">Attention Flow</div>
+            </div>
+        </div>
+        
+        <div class="vessel-diagram" id="vesselDiagram">
+            <!-- Layer 1: Input & Data Ingestion -->
+            <div class="layer layer-1" data-layer="ingestion">
+                <div class="layer-title">
+                    <span class="status-indicator"></span>
+                    LAYER 1: DATA INGESTION & MARKET SENSING
+                </div>
+                <div class="component" data-component="market-feeds">Market Feeds</div>
+                <div class="component" data-component="sentiment">Sentiment Analysis</div>
+                <div class="component" data-component="numerai-data">Numerai Datasets</div>
+                <div class="component" data-component="attention-metrics">Attention Metrics</div>
+                <div class="component" data-component="blockchain">Blockchain Events</div>
+                
+                <!-- Signal flow lines -->
+                <div class="signal-flow" style="left: 15%; height: 170px;"></div>
+                <div class="signal-flow" style="left: 35%; height: 170px;"></div>
+                <div class="signal-flow" style="left: 55%; height: 170px;"></div>
+                <div class="signal-flow" style="left: 75%; height: 170px;"></div>
+            </div>
+            
+            <!-- Layer 2: Feature Engineering & Processing -->
+            <div class="layer layer-2" data-layer="processing">
+                <div class="layer-title">
+                    <span class="status-indicator"></span>
+                    LAYER 2: FEATURE ENGINEERING & PROCESSING
+                </div>
+                <div class="component active" data-component="rust-engine">Rust Performance Engine</div>
+                <div class="component" data-component="haskell-math">Haskell Math Core</div>
+                <div class="component" data-component="elixir-pipeline">Elixir Pipeline</div>
+                <div class="component" data-component="feature-store">Feature Store</div>
+                
+                <div class="signal-flow" style="left: 25%; height: 170px;"></div>
+                <div class="signal-flow" style="left: 50%; height: 170px;"></div>
+                <div class="signal-flow" style="left: 75%; height: 170px;"></div>
+            </div>
+            
+            <!-- Layer 3: Prediction & Strategy -->
+            <div class="layer layer-3" data-layer="prediction">
+                <div class="layer-title">
+                    <span class="status-indicator"></span>
+                    LAYER 3: PREDICTION & STRATEGY GENERATION
+                </div>
+                <div class="component" data-component="ensemble">5-Model Ensemble</div>
+                <div class="component active" data-component="bayesian">Bayesian Reflexivity</div>
+                <div class="component" data-component="game-theory">Game Theory Optimizer</div>
+                <div class="component" data-component="attention-allocator">Attention Allocator</div>
+                
+                <div class="signal-flow" style="left: 30%; height: 170px;"></div>
+                <div class="signal-flow" style="left: 60%; height: 170px;"></div>
+            </div>
+            
+            <!-- Layer 4: Economic Agency & Execution -->
+            <div class="layer layer-4" data-layer="execution">
+                <div class="layer-title">
+                    <span class="status-indicator"></span>
+                    LAYER 4: ECONOMIC AGENCY & EXECUTION
+                </div>
+                <div class="component" data-component="tournament">Tournament Submitter</div>
+                <div class="component" data-component="defi">DeFi Integration</div>
+                <div class="component active" data-component="token-launch">Token Orchestrator</div>
+                <div class="component" data-component="risk-manager">Risk Manager</div>
+                
+                <div class="signal-flow" style="left: 45%; height: 170px;"></div>
+            </div>
+            
+            <!-- Layer 5: Feedback & Learning -->
+            <div class="layer layer-5" data-layer="feedback">
+                <div class="layer-title">
+                    <span class="status-indicator"></span>
+                    LAYER 5: FEEDBACK & ADAPTIVE LEARNING
+                </div>
+                <div class="component" data-component="performance">Performance Tracker</div>
+                <div class="component" data-component="reinforcement">Reinforcement Learning</div>
+                <div class="component active" data-component="memetic">Memetic Evolution</div>
+            </div>
+            
+            <!-- Flow indicators -->
+            <div class="flow-indicator" id="flowIndicator1"></div>
+            <div class="flow-indicator" id="flowIndicator2"></div>
+            <div class="flow-indicator" id="flowIndicator3"></div>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h2>🎛️ Vessel Controls</h2>
+            
+            <div class="control-section">
+                <h3>Signal Flow Rate</h3>
+                <div class="control-item">
+                    <label>Processing Speed: <span id="speedValue">100</span>%</label>
+                    <input type="range" id="speedControl" min="0" max="200" value="100">
+                </div>
+                <div class="control-item">
+                    <label>Attention Budget: <span id="attentionValue">3200</span></label>
+                    <input type="range" id="attentionControl" min="1000" max="5000" value="3200">
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <h3>Live Metrics</h3>
+                <div class="metric-display">
+                    <div class="metric-value" id="predictionAccuracy">87.3%</div>
+                    <div class="metric-label">Prediction Accuracy</div>
+                </div>
+                <div class="metric-display">
+                    <div class="metric-value" id="portfolioValue">4.65</div>
+                    <div class="metric-label">Portfolio Value</div>
+                </div>
+                <div class="metric-display">
+                    <div class="metric-value" id="signalStrength">0.73</div>
+                    <div class="metric-label">Signal Strength</div>
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <h3>Component Settings</h3>
+                <div class="control-item">
+                    <label>Bayesian Prior: <span id="priorValue">0.5</span></label>
+                    <input type="range" id="priorControl" min="0" max="100" value="50">
+                </div>
+                <div class="control-item">
+                    <label>Risk Tolerance: <span id="riskValue">0.15</span></label>
+                    <input type="range" id="riskControl" min="0" max="100" value="15">
+                </div>
+                <div class="control-item">
+                    <label>Token Velocity: <span id="velocityValue">2.4</span></label>
+                    <input type="range" id="velocityControl" min="10" max="50" value="24">
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <h3>Active Vessels</h3>
+                <div id="activeVesselsList">
+                    <div class="component">Numerai</div>
+                    <div class="component active">Pythia</div>
+                    <div class="component">Backtesting</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Component Inset Panels -->
+        <div class="inset-panel" id="marketFeedsPanel" style="top: 60px; left: 100px;">
+            <h4>Market Feeds</h4>
+            <div class="data-stream" id="marketStream">
+                BTC: $67,234 ↑2.3%<br>
+                ETH: $3,456 ↑1.8%<br>
+                SPY: $445.23 ↓0.4%
+            </div>
+            <small>Updates: 143/sec</small>
+        </div>
+        
+        <div class="inset-panel" id="ensemblePanel" style="top: 380px; left: 150px;">
+            <h4>Ensemble Models</h4>
+            <div>XGBoost: 0.892</div>
+            <div>LSTM: 0.867</div>
+            <div>Random Forest: 0.854</div>
+            <div>Neural Net: 0.871</div>
+            <div>Linear: 0.823</div>
+            <div style="margin-top: 10px; color: #00ff88;">
+                <strong>Weighted: 0.873</strong>
+            </div>
+        </div>
+        
+        <div class="inset-panel" id="tokenPanel" style="top: 550px; left: 500px;">
+            <h4>Token Orchestrator</h4>
+            <div>Launch Stage: <span style="color: #00ff88;">PRIMED</span></div>
+            <div>Liquidity Pool: $1.2M</div>
+            <div>Bonding Curve: k=0.73</div>
+            <div class="data-stream" id="tokenStream">
+                Mint: 1000 POM<br>
+                Burn: 50 POM<br>
+                Price: $0.0234
+            </div>
+        </div>
+        
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+    
+    <script>
+        // Global state
+        let currentView = 'architecture';
+        let signalFlowSpeed = 100;
+        let activeComponents = new Set(['bayesian', 'rust-engine', 'token-launch', 'memetic', 'pythia']);
+        let metricsInterval;
+        let flowAnimations = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeControls();
+            initializeComponents();
+            startMetricsUpdates();
+            animateSignalFlow();
+            initializeNavigation();
+        });
+        
+        // Navigation
+        function initializeNavigation() {
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentView = this.dataset.view;
+                    updateView();
+                });
+            });
+        }
+        
+        function updateView() {
+            const diagram = document.getElementById('vesselDiagram');
+            
+            switch(currentView) {
+                case 'signal':
+                    highlightSignalPath();
+                    break;
+                case 'economics':
+                    showEconomicsView();
+                    break;
+                case 'attention':
+                    showAttentionFlow();
+                    break;
+                default:
+                    resetView();
+            }
+        }
+        
+        // Component interactions
+        function initializeComponents() {
+            document.querySelectorAll('.component').forEach(comp => {
+                comp.addEventListener('click', function() {
+                    toggleComponent(this);
+                });
+                
+                comp.addEventListener('mouseenter', function(e) {
+                    showTooltip(e, this);
+                });
+                
+                comp.addEventListener('mouseleave', function() {
+                    hideTooltip();
+                });
+            });
+            
+            document.querySelectorAll('.layer').forEach(layer => {
+                layer.addEventListener('click', function(e) {
+                    if (e.target === this || e.target.classList.contains('layer-title')) {
+                        showLayerDetails(this);
+                    }
+                });
+            });
+        }
+        
+        function toggleComponent(component) {
+            const componentId = component.dataset.component;
+            
+            if (component.classList.contains('active')) {
+                component.classList.remove('active');
+                activeComponents.delete(componentId);
+                hideInsetPanel(componentId);
+            } else {
+                component.classList.add('active');
+                activeComponents.add(componentId);
+                showInsetPanel(componentId);
+            }
+            
+            updateMetrics();
+        }
+        
+        function showInsetPanel(componentId) {
+            const panels = {
+                'market-feeds': 'marketFeedsPanel',
+                'ensemble': 'ensemblePanel',
+                'token-launch': 'tokenPanel'
+            };
+            
+            const panelId = panels[componentId];
+            if (panelId) {
+                const panel = document.getElementById(panelId);
+                panel.classList.add('visible');
+                
+                // Start live data updates for this panel
+                if (componentId === 'market-feeds') {
+                    startMarketDataStream();
+                } else if (componentId === 'token-launch') {
+                    startTokenDataStream();
+                }
+            }
+        }
+        
+        function hideInsetPanel(componentId) {
+            const panels = {
+                'market-feeds': 'marketFeedsPanel',
+                'ensemble': 'ensemblePanel',
+                'token-launch': 'tokenPanel'
+            };
+            
+            const panelId = panels[componentId];
+            if (panelId) {
+                document.getElementById(panelId).classList.remove('visible');
+            }
+        }
+        
+        // Control panel
+        function initializeControls() {
+            // Speed control
+            document.getElementById('speedControl').addEventListener('input', function() {
+                signalFlowSpeed = this.value;
+                document.getElementById('speedValue').textContent = this.value;
+                updateSignalFlowSpeed();
+            });
+            
+            // Attention control
+            document.getElementById('attentionControl').addEventListener('input', function() {
+                document.getElementById('attentionValue').textContent = this.value;
+                updateAttentionAllocation(this.value);
+            });
+            
+            // Bayesian prior
+            document.getElementById('priorControl').addEventListener('input', function() {
+                document.getElementById('priorValue').textContent = (this.value / 100).toFixed(2);
+            });
+            
+            // Risk tolerance
+            document.getElementById('riskControl').addEventListener('input', function() {
+                document.getElementById('riskValue').textContent = (this.value / 100).toFixed(2);
+            });
+            
+            // Token velocity
+            document.getElementById('velocityControl').addEventListener('input', function() {
+                document.getElementById('velocityValue').textContent = (this.value / 10).toFixed(1);
+            });
+        }
+        
+        // Live metrics updates
+        function startMetricsUpdates() {
+            metricsInterval = setInterval(() => {
+                updateMetrics();
+            }, 2000);
+        }
+        
+        function updateMetrics() {
+            // Simulate metric changes based on active components
+            const baseAccuracy = 80;
+            const accuracyBoost = activeComponents.size * 1.5;
+            const accuracy = Math.min(95, baseAccuracy + accuracyBoost + Math.random() * 5);
+            document.getElementById('predictionAccuracy').textContent = accuracy.toFixed(1) + '%';
+            
+            // Portfolio value
+            const portfolioBase = 4.0;
+            const portfolioBoost = activeComponents.size * 0.15;
+            const portfolio = portfolioBase + portfolioBoost + Math.random() * 0.3;
+            document.getElementById('portfolioValue').textContent = portfolio.toFixed(2);
+            
+            // Signal strength
+            const signalBase = 0.5;
+            const signalBoost = activeComponents.size * 0.08;
+            const signal = Math.min(1.0, signalBase + signalBoost + Math.random() * 0.1);
+            document.getElementById('signalStrength').textContent = signal.toFixed(2);
+        }
+        
+        // Signal flow animation
+        function animateSignalFlow() {
+            const indicator1 = document.getElementById('flowIndicator1');
+            const indicator2 = document.getElementById('flowIndicator2');
+            const indicator3 = document.getElementById('flowIndicator3');
+            
+            // Create flow paths
+            animateFlowIndicator(indicator1, [
+                {x: 100, y: 75},
+                {x: 200, y: 245},
+                {x: 350, y: 415},
+                {x: 500, y: 585},
+                {x: 650, y: 740}
+            ]);
+            
+            animateFlowIndicator(indicator2, [
+                {x: 300, y: 75},
+                {x: 400, y: 245},
+                {x: 550, y: 415},
+                {x: 700, y: 585},
+                {x: 450, y: 740}
+            ]);
+            
+            animateFlowIndicator(indicator3, [
+                {x: 500, y: 75},
+                {x: 600, y: 245},
+                {x: 750, y: 415},
+                {x: 400, y: 585},
+                {x: 250, y: 740}
+            ]);
+        }
+        
+        function animateFlowIndicator(indicator, path) {
+            let index = 0;
+            const speed = 100 / signalFlowSpeed;
+            
+            const animation = setInterval(() => {
+                if (index >= path.length) {
+                    index = 0;
+                }
+                
+                const point = path[index];
+                indicator.style.left = point.x + 'px';
+                indicator.style.top = point.y + 'px';
+                
+                index++;
+            }, 800 * speed);
+            
+            flowAnimations.push(animation);
+        }
+        
+        function updateSignalFlowSpeed() {
+            // Clear existing animations
+            flowAnimations.forEach(anim => clearInterval(anim));
+            flowAnimations = [];
+            
+            // Restart with new speed
+            animateSignalFlow();
+        }
+        
+        // Data streams
+        function startMarketDataStream() {
+            setInterval(() => {
+                const stream = document.getElementById('marketStream');
+                if (stream && stream.parentElement.classList.contains('visible')) {
+                    const btc = 65000 + Math.random() * 5000;
+                    const eth = 3200 + Math.random() * 500;
+                    const spy = 440 + Math.random() * 10;
+                    
+                    stream.innerHTML = `
+                        BTC: $${btc.toFixed(0)} ${Math.random() > 0.5 ? '↑' : '↓'}${(Math.random() * 3).toFixed(1)}%<br>
+                        ETH: $${eth.toFixed(0)} ${Math.random() > 0.5 ? '↑' : '↓'}${(Math.random() * 2).toFixed(1)}%<br>
+                        SPY: $${spy.toFixed(2)} ${Math.random() > 0.5 ? '↑' : '↓'}${(Math.random() * 1).toFixed(1)}%
+                    `;
+                }
+            }, 1500);
+        }
+        
+        function startTokenDataStream() {
+            setInterval(() => {
+                const stream = document.getElementById('tokenStream');
+                if (stream && stream.parentElement.classList.contains('visible')) {
+                    const mint = Math.floor(Math.random() * 2000);
+                    const burn = Math.floor(Math.random() * 200);
+                    const price = 0.02 + Math.random() * 0.01;
+                    
+                    stream.innerHTML = `
+                        Mint: ${mint} POM<br>
+                        Burn: ${burn} POM<br>
+                        Price: $${price.toFixed(4)}
+                    `;
+                }
+            }, 2000);
+        }
+        
+        // Tooltips
+        function showTooltip(event, component) {
+            const tooltip = document.getElementById('tooltip');
+            const componentId = component.dataset.component;
+            
+            const descriptions = {
+                'market-feeds': 'Real-time market data ingestion from multiple exchanges',
+                'sentiment': 'Social media and news sentiment analysis engine',
+                'numerai-data': 'Numerai tournament datasets and signals',
+                'attention-metrics': 'Attention economy tracking and flow analysis',
+                'blockchain': 'On-chain event monitoring and DeFi state tracking',
+                'rust-engine': 'High-performance Rust computation engine for feature processing',
+                'haskell-math': 'Pure functional mathematical modeling core',
+                'elixir-pipeline': 'Fault-tolerant distributed processing pipeline',
+                'feature-store': 'Centralized feature storage and versioning system',
+                'ensemble': '5-model ensemble combining XGBoost, LSTM, RF, NN, Linear',
+                'bayesian': 'Bayesian reflexivity engine with market feedback loops',
+                'game-theory': 'Nash equilibrium optimizer for strategic positioning',
+                'attention-allocator': 'Dynamic attention budget allocation system',
+                'tournament': 'Automated Numerai tournament submission system',
+                'defi': 'DeFi protocol integration for yield optimization',
+                'token-launch': 'Token launch orchestration with bonding curves',
+                'risk-manager': 'Multi-dimensional risk assessment and mitigation',
+                'performance': 'Real-time performance tracking and attribution',
+                'reinforcement': 'Reinforcement learning for strategy improvement',
+                'memetic': 'Memetic evolution for viral strategy propagation'
+            };
+            
+            tooltip.innerHTML = descriptions[componentId] || 'Component details';
+            tooltip.style.display = 'block';
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY + 10 + 'px';
+        }
+        
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+        
+        // View modes
+        function highlightSignalPath() {
+            // Highlight the main signal flow path
+            document.querySelectorAll('.component').forEach(comp => {
+                comp.style.opacity = '0.3';
+            });
+            
+            const signalPath = ['market-feeds', 'rust-engine', 'ensemble', 'tournament', 'performance'];
+            signalPath.forEach(id => {
+                const comp = document.querySelector(`[data-component="${id}"]`);
+                if (comp) {
+                    comp.style.opacity = '1';
+                    comp.classList.add('active');
+                }
+            });
+        }
+        
+        function showEconomicsView() {
+            // Focus on economic components
+            document.querySelectorAll('.component').forEach(comp => {
+                comp.style.opacity = '0.3';
+            });
+            
+            const economicComponents = ['tournament', 'defi', 'token-launch', 'risk-manager'];
+            economicComponents.forEach(id => {
+                const comp = document.querySelector(`[data-component="${id}"]`);
+                if (comp) {
+                    comp.style.opacity = '1';
+                    comp.classList.add('active');
+                }
+            });
+        }
+        
+        function showAttentionFlow() {
+            // Visualize attention allocation
+            document.querySelectorAll('.component').forEach(comp => {
+                const attentionWeight = Math.random();
+                comp.style.opacity = 0.3 + attentionWeight * 0.7;
+                comp.style.transform = `scale(${1 + attentionWeight * 0.2})`;
+            });
+        }
+        
+        function resetView() {
+            document.querySelectorAll('.component').forEach(comp => {
+                comp.style.opacity = '1';
+                comp.style.transform = 'scale(1)';
+            });
+        }
+        
+        function showLayerDetails(layer) {
+            const layerName = layer.dataset.layer;
+            console.log('Layer clicked:', layerName);
+            // Could expand this to show more detailed layer information
+        }
+        
+        // Update attention allocation
+        function updateAttentionAllocation(budget) {
+            const totalBudget = parseInt(budget);
+            const componentsCount = activeComponents.size || 1;
+            const perComponent = Math.floor(totalBudget / componentsCount);
+            
+            // Visual feedback on attention allocation
+            document.querySelectorAll('.component.active').forEach(comp => {
+                const intensity = Math.min(1, perComponent / 1000);
+                comp.style.boxShadow = `0 0 ${20 * intensity}px rgba(0, 255, 136, ${intensity})`;
+            });
+        }
+        
+        // Fetch real vessel status periodically
+        async function fetchVesselStatus() {
+            try {
+                const response = await fetch('/api/vessels-status');
+                const status = await response.json();
+                
+                // Update portfolio value with real data
+                document.getElementById('portfolioValue').textContent = status['portfolio-value'].toFixed(2);
+                
+                // Update alignment score
+                const alignment = status['predict-o-matic-alignment']['alignment-score'];
+                const signalStrength = document.getElementById('signalStrength');
+                signalStrength.textContent = alignment.toFixed(2);
+                
+            } catch (error) {
+                console.log('Using simulated data - API not available');
+            }
+        }
+        
+        // Fetch status every 5 seconds
+        setInterval(fetchVesselStatus, 5000);
+        fetchVesselStatus(); // Initial fetch
+        
+        // WebSocket connection for live data
+        let ws;
+        let reconnectInterval;
+        
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8767');
+            
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                clearInterval(reconnectInterval);
+                
+                // Request initial state
+                ws.send(JSON.stringify({type: 'request_state'}));
+            };
+            
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                handleWebSocketMessage(message);
+            };
+            
+            ws.onerror = function(error) {
+                console.log('WebSocket error:', error);
+            };
+            
+            ws.onclose = function() {
+                console.log('WebSocket disconnected');
+                // Try to reconnect every 5 seconds
+                reconnectInterval = setInterval(() => {
+                    console.log('Attempting to reconnect...');
+                    connectWebSocket();
+                }, 5000);
+            };
+        }
+        
+        function handleWebSocketMessage(message) {
+            if (message.type === 'state_update' || message.type === 'initial') {
+                const data = message.data;
+                
+                // Update metrics
+                if (data.metrics) {
+                    document.getElementById('predictionAccuracy').textContent = 
+                        (data.metrics.prediction_accuracy * 100).toFixed(1) + '%';
+                    document.getElementById('portfolioValue').textContent = 
+                        data.metrics.portfolio_value.toFixed(2);
+                    document.getElementById('signalStrength').textContent = 
+                        data.metrics.signal_strength.toFixed(2);
+                }
+                
+                // Update component states
+                if (data.components) {
+                    Object.entries(data.components).forEach(([name, state]) => {
+                        const comp = document.querySelector(`[data-component="${name}"]`);
+                        if (comp) {
+                            if (state.active && state.health > 0.7) {
+                                comp.classList.add('active');
+                            } else if (state.health < 0.5) {
+                                comp.classList.remove('active');
+                                comp.style.opacity = '0.5';
+                            }
+                        }
+                    });
+                }
+                
+                // Update market data stream
+                if (data.market_data) {
+                    const stream = document.getElementById('marketStream');
+                    if (stream) {
+                        stream.innerHTML = `
+                            BTC: $${data.market_data.BTC.toFixed(0)} ${data.market_data.BTC > 65000 ? '↑' : '↓'}<br>
+                            ETH: $${data.market_data.ETH.toFixed(0)} ${data.market_data.ETH > 3200 ? '↑' : '↓'}<br>
+                            SPY: $${data.market_data.SPY.toFixed(2)} ${data.market_data.SPY > 445 ? '↑' : '↓'}
+                        `;
+                    }
+                }
+                
+                // Update token stream
+                if (data.token_metrics) {
+                    const stream = document.getElementById('tokenStream');
+                    if (stream) {
+                        stream.innerHTML = `
+                            Mint: ${data.token_metrics.mint_rate} POM<br>
+                            Burn: ${data.token_metrics.burn_rate} POM<br>
+                            Price: $${data.token_metrics.price.toFixed(4)}
+                        `;
+                    }
+                }
+                
+                // Animate signal flows
+                if (data.signal_flows) {
+                    animateActiveSignalFlows(data.signal_flows);
+                }
+            }
+        }
+        
+        function animateActiveSignalFlows(flows) {
+            // Clear existing flow animations
+            document.querySelectorAll('.signal-flow').forEach(flow => {
+                flow.style.opacity = '0.3';
+            });
+            
+            // Highlight active flows
+            flows.forEach(flow => {
+                const fromComp = document.querySelector(`[data-component="${flow.from}"]`);
+                const toComp = document.querySelector(`[data-component="${flow.to}"]`);
+                
+                if (fromComp && toComp) {
+                    // Create visual connection
+                    const fromRect = fromComp.getBoundingClientRect();
+                    const toRect = toComp.getBoundingClientRect();
+                    
+                    // Find nearest signal flow line and make it active
+                    const flows = document.querySelectorAll('.signal-flow');
+                    flows.forEach(flowLine => {
+                        flowLine.style.opacity = flow.strength.toFixed(2);
+                    });
+                }
+            });
+        }
+        
+        // Try to connect to WebSocket
+        connectWebSocket();
+    </script>
+</body>
+</html>

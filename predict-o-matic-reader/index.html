@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict-O-Matic: Interactive Math Explorer</title>
+    
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                packages: ['base', 'ams', 'color', 'bbox']
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    
+    <!-- Plotly for interactive visualizations -->
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+        
+        .sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+        }
+        
+        .toc-item {
+            cursor: pointer;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .toc-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .toc-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 3px solid #4facfe;
+        }
+        
+        .toc-subsection {
+            margin-left: 15px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            padding: 40px;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            font-weight: 300;
+        }
+        
+        .section {
+            margin-bottom: 50px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .section h2 {
+            font-size: 2rem;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            border-left: 4px solid #4facfe;
+            padding-left: 15px;
+        }
+        
+        .section h3 {
+            font-size: 1.4rem;
+            color: #2a5298;
+            margin: 25px 0 15px 0;
+        }
+        
+        .math-container {
+            background: #f8f9fa;
+            border: 1px solid #e1e8ed;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .interactive-demo {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .interactive-demo h4 {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-group label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        input[type="range"] {
+            width: 120px;
+        }
+        
+        .plot-container {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            height: 300px;
+        }
+        
+        .math-panel {
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .math-panel h3 {
+            color: #1e40af;
+            margin-bottom: 15px;
+        }
+        
+        .key-equations {
+            margin-bottom: 20px;
+        }
+        
+        .equation-box {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .parameter-inspector {
+            background: #fefce8;
+            border: 1px solid #eab308;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .narrative-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            font-style: italic;
+        }
+        
+        .feedback-loop {
+            border: 2px dashed #4facfe;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            background: rgba(79, 172, 254, 0.05);
+        }
+        
+        .tokenomics-widget {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .bonding-curve-viz {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            color: #e11d48;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, rgba(255, 242, 0, 0.3) 0%, rgba(255, 242, 0, 0) 100%);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 250px 1fr;
+            }
+            
+            .math-panel {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                height: auto;
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>📖 Navigation</h2>
+            <div class="toc-item" data-section="intro">🎯 Introduction</div>
+            <div class="toc-item" data-section="formalization">📊 Formalizing Predictions</div>
+            <div class="toc-subsection toc-item" data-section="bayes">• Bayes' Rule</div>
+            <div class="toc-subsection toc-item" data-section="feedback">• Reflexive Feedback</div>
+            <div class="toc-subsection toc-item" data-section="game-theory">• Game Theory</div>
+            <div class="toc-subsection toc-item" data-section="dynamics">• Dynamical Systems</div>
+            <div class="toc-item" data-section="economic-agent">💰 Economic Agent</div>
+            <div class="toc-subsection toc-item" data-section="rationality">• Rationality</div>
+            <div class="toc-subsection toc-item" data-section="oracle">• Oracle Mechanisms</div>
+            <div class="toc-subsection toc-item" data-section="reflexivity">• Market Reflexivity</div>
+            <div class="toc-item" data-section="crypto-case">🪙 Crypto Case Study</div>
+            <div class="toc-subsection toc-item" data-section="quant-vision">• The Quant's Vision</div>
+            <div class="toc-subsection toc-item" data-section="token-design">• Token Design</div>
+            <div class="toc-subsection toc-item" data-section="dynamics">• Token Dynamics</div>
+            
+            <h2>🧮 Interactive Tools</h2>
+            <div class="toc-item" onclick="openCalculator()">📱 Parameter Calculator</div>
+            <div class="toc-item" onclick="openSimulator()">🔬 Feedback Simulator</div>
+            <div class="toc-item" onclick="openTokenAnalyzer()">🪙 Token Analyzer</div>
+        </nav>
+        
+        <main class="main-content">
+            <div class="header">
+                <h1>Predict-O-Matic: A Formal Parable</h1>
+                <p class="subtitle">Interactive Mathematical Exploration of Reflexive Prediction Systems and Crypto-Oracle Economics</p>
+            </div>
+            
+            <section class="section" id="intro">
+                <h2>🎯 Introduction & Mathematical Framework</h2>
+                
+                <p>We model the <strong>Predict-O-Matic</strong> – a powerful forecasting machine whose predictions causally influence the world – using rigorous mathematics and economics. This interactive exploration treats the P-O-M both as a Bayesian prediction system with feedback and as a rational economic agent embedded in markets.</p>
+                
+                <div class="narrative-box">
+                    <strong>The Parable:</strong> A machine that predicts the future becomes so trusted that its predictions start to create the future. What happens when prediction becomes causation?
+                </div>
+                
+                <div class="interactive-demo">
+                    <h4>🎮 Interactive Preview: Prediction Causality</h4>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Prediction Influence (p₁): <span id="p1-value">0.7</span></label>
+                            <input type="range" id="p1-slider" min="0.1" max="0.95" step="0.05" value="0.7">
+                        </div>
+                        <div class="control-group">
+                            <label>Base Probability (p₀): <span id="p0-value">0.3</span></label>
+                            <input type="range" id="p0-slider" min="0.05" max="0.9" step="0.05" value="0.3">
+                        </div>
+                    </div>
+                    <div class="plot-container" id="causality-plot"></div>
+                </div>
+            </section>
+            
+            <section class="section" id="formalization">
+                <h2>📊 1. Formalizing Predictions and Feedback</h2>
+                
+                <div id="bayes" class="subsection">
+                    <h3>1.1 Probability and Bayes' Rule</h3>
+                    
+                    <p>Let $Y$ be the event that the Predict-O-Matic forecasts, and let $O$ be the actual outcome. By Bayes' theorem:</p>
+                    
+                    <div class="math-container">
+                        $$\Pr(O \mid D) \propto \Pr(D \mid O) \Pr(O)$$
+                    </div>
+                    
+                    <p>A predictor aiming to maximize accuracy under a log-scoring rule will set its forecast distribution $P_{\text{pred}}(y)$ equal to the estimated posterior $\Pr(O=y\mid D)$.</p>
+                    
+                    <div class="interactive-demo">
+                        <h4>🎮 Bayesian Update Simulator</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>Prior π₀: <span id="prior-value">0.5</span></label>
+                                <input type="range" id="prior-slider" min="0.1" max="0.9" step="0.1" value="0.5">
+                            </div>
+                            <div class="control-group">
+                                <label>Evidence Weight: <span id="evidence-value">0.8</span></label>
+                                <input type="range" id="evidence-slider" min="0.1" max="1.0" step="0.1" value="0.8">
+                            </div>
+                        </div>
+                        <div class="plot-container" id="bayes-plot"></div>
+                    </div>
+                </div>
+                
+                <div id="feedback" class="subsection">
+                    <h3>1.2 Reflexive Feedback: Predictions as Causes</h3>
+                    
+                    <p>Crucially, the Predict-O-Matic's forecast $Y$ actively influences the outcome $O$. We model this with conditional probabilities:</p>
+                    
+                    <div class="math-container">
+                        $$\Pr(O = \text{yes} \mid Y = \text{yes}) = p_1, \quad \Pr(O = \text{yes} \mid Y = \text{no}) = p_0$$
+                        
+                        <p>where $p_1 > p_0$. The unconditional outcome probability becomes:</p>
+                        
+                        $$\Pr(O = \text{yes}) = \Pr(Y = \text{yes}) p_1 + \Pr(Y = \text{no}) p_0$$
+                    </div>
+                    
+                    <div class="feedback-loop">
+                        <strong>🔄 Feedback Loop:</strong> Predictions → Market Actions → Outcomes → Updated Predictions → ...
+                        
+                        <p>This creates a causal graph $Y \to O$ where the predictor must account for its own influence.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section" id="economic-agent">
+                <h2>💰 2. Predict-O-Matic as an Economic Agent</h2>
+                
+                <div class="narrative-box">
+                    <strong>Economic Evolution:</strong> The machine transitions from passive predictor to active market participant, trading on its own forecasts and earning rewards for accuracy.
+                </div>
+                
+                <div id="rationality" class="subsection">
+                    <h3>2.1 Rationality and Market Integration</h3>
+                    
+                    <p>The P-O-M's utility function under a proper scoring rule:</p>
+                    
+                    <div class="math-container">
+                        $$U(P_{\text{pred}}) = \sum_{y,o} P_{\text{pred}}(y) \Pr(o \mid y) S(y, o)$$
+                        
+                        <p>where $S(y,o)$ is the score for predicting $y$ when outcome is $o$.</p>
+                    </div>
+                    
+                    <div class="interactive-demo">
+                        <h4>🎮 Economic Utility Explorer</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>Risk Aversion: <span id="risk-value">0.2</span></label>
+                                <input type="range" id="risk-slider" min="0" max="1" step="0.1" value="0.2">
+                            </div>
+                            <div class="control-group">
+                                <label>Market Impact: <span id="impact-value">0.3</span></label>
+                                <input type="range" id="impact-slider" min="0" max="0.8" step="0.1" value="0.3">
+                            </div>
+                        </div>
+                        <div class="plot-container" id="utility-plot"></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section" id="crypto-case">
+                <h2>🪙 3. Case Study: The Crypto-Token Architect</h2>
+                
+                <div class="narrative-box">
+                    <strong>Dr. Athena Morris, Quantitative Analyst:</strong><br>
+                    "If the Predict-O-Matic is reshaping markets, then information is money. I will create a blockchain token – P-Tok – whose entire ecosystem is tied to the P-O-M's oracle."
+                </div>
+                
+                <div id="token-design" class="subsection">
+                    <h3>3.2 Token Design: Bonding Curves and Supply Dynamics</h3>
+                    
+                    <p>P-Tok uses a bonding curve issuance model with linear pricing:</p>
+                    
+                    <div class="math-container">
+                        $$p(S) = aS + b$$
+                        
+                        <p>The cost to purchase $\Delta S$ tokens from supply $S$ to $S+\Delta S$ is:</p>
+                        
+                        $$\text{Cost} = \int_S^{S+\Delta S} p(x) dx = a\left[\frac{x^2}{2}\right]_S^{S+\Delta S} + b\Delta S$$
+                    </div>
+                    
+                    <div class="tokenomics-widget">
+                        <h4>🪙 Interactive Bonding Curve</h4>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>Slope (a): <span id="slope-value">0.01</span></label>
+                                <input type="range" id="slope-slider" min="0.001" max="0.05" step="0.001" value="0.01">
+                            </div>
+                            <div class="control-group">
+                                <label>Base Price (b): <span id="base-value">1.0</span></label>
+                                <input type="range" id="base-slider" min="0.1" max="5.0" step="0.1" value="1.0">
+                            </div>
+                            <div class="control-group">
+                                <label>Supply: <span id="supply-value">100</span></label>
+                                <input type="range" id="supply-slider" min="0" max="500" step="10" value="100">
+                            </div>
+                        </div>
+                        <div class="bonding-curve-viz">
+                            <div class="plot-container" id="bonding-curve-plot"></div>
+                            <div id="bonding-stats" style="margin-top: 15px; text-align: center;">
+                                <strong>Current Price: $<span id="current-price">2.00</span></strong><br>
+                                <strong>Market Cap: $<span id="market-cap">200.00</span></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <aside class="math-panel">
+            <h3>🧮 Key Equations</h3>
+            
+            <div class="key-equations">
+                <div class="equation-box">
+                    <strong>Bayes Update:</strong>
+                    $$\Pr(\theta \mid Y, O) \propto \Pr(O \mid Y, \theta) \Pr(Y \mid \theta) \Pr(\theta)$$
+                </div>
+                
+                <div class="equation-box">
+                    <strong>Feedback Dynamics:</strong>
+                    $$x_{t+1} = G(x_t, f(x_t)) + \varepsilon_t$$
+                </div>
+                
+                <div class="equation-box">
+                    <strong>Economic Utility:</strong>
+                    $$U = \mathbb{E}_O[\text{reward}(Y, O)]$$
+                </div>
+                
+                <div class="equation-box">
+                    <strong>Bonding Curve:</strong>
+                    $$p(S) = aS + b$$
+                </div>
+            </div>
+            
+            <div class="parameter-inspector">
+                <h4>📊 Current Parameters</h4>
+                <div id="param-display">
+                    <div>p₁ = <span id="current-p1">0.7</span></div>
+                    <div>p₀ = <span id="current-p0">0.3</span></div>
+                    <div>Reflexivity = <span id="current-reflexivity">0.4</span></div>
+                </div>
+            </div>
+        </aside>
+    </div>
+    
+    <script>
+        // Initialize MathJax rendering
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation handling
+            const tocItems = document.querySelectorAll('.toc-item');
+            tocItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionId = this.dataset.section;
+                    if (sectionId) {
+                        document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+                        
+                        // Update active state
+                        tocItems.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+            
+            // Initialize interactive plots
+            initializePlots();
+            
+            // Set up event listeners for sliders
+            setupSliderListeners();
+        });
+        
+        function initializePlots() {
+            // Causality plot
+            updateCausalityPlot();
+            
+            // Bayes plot  
+            updateBayesPlot();
+            
+            // Utility plot
+            updateUtilityPlot();
+            
+            // Bonding curve plot
+            updateBondingCurvePlot();
+        }
+        
+        function setupSliderListeners() {
+            // Causality sliders
+            const p1Slider = document.getElementById('p1-slider');
+            const p0Slider = document.getElementById('p0-slider');
+            
+            p1Slider.addEventListener('input', function() {
+                document.getElementById('p1-value').textContent = this.value;
+                document.getElementById('current-p1').textContent = this.value;
+                updateCausalityPlot();
+                updateReflexivity();
+            });
+            
+            p0Slider.addEventListener('input', function() {
+                document.getElementById('p0-value').textContent = this.value;
+                document.getElementById('current-p0').textContent = this.value;
+                updateCausalityPlot();
+                updateReflexivity();
+            });
+            
+            // Bayes sliders
+            document.getElementById('prior-slider').addEventListener('input', function() {
+                document.getElementById('prior-value').textContent = this.value;
+                updateBayesPlot();
+            });
+            
+            document.getElementById('evidence-slider').addEventListener('input', function() {
+                document.getElementById('evidence-value').textContent = this.value;
+                updateBayesPlot();
+            });
+            
+            // Economic utility sliders
+            document.getElementById('risk-slider').addEventListener('input', function() {
+                document.getElementById('risk-value').textContent = this.value;
+                updateUtilityPlot();
+            });
+            
+            document.getElementById('impact-slider').addEventListener('input', function() {
+                document.getElementById('impact-value').textContent = this.value;
+                updateUtilityPlot();
+            });
+            
+            // Bonding curve sliders
+            document.getElementById('slope-slider').addEventListener('input', function() {
+                document.getElementById('slope-value').textContent = this.value;
+                updateBondingCurvePlot();
+            });
+            
+            document.getElementById('base-slider').addEventListener('input', function() {
+                document.getElementById('base-value').textContent = this.value;
+                updateBondingCurvePlot();
+            });
+            
+            document.getElementById('supply-slider').addEventListener('input', function() {
+                document.getElementById('supply-value').textContent = this.value;
+                updateBondingCurvePlot();
+            });
+        }
+        
+        function updateCausalityPlot() {
+            const p1 = parseFloat(document.getElementById('p1-slider').value);
+            const p0 = parseFloat(document.getElementById('p0-slider').value);
+            
+            // Generate data for feedback effect
+            const predictionRates = [];
+            const outcomeRates = [];
+            
+            for (let predRate = 0; predRate <= 1; predRate += 0.05) {
+                predictionRates.push(predRate);
+                outcomeRates.push(predRate * p1 + (1 - predRate) * p0);
+            }
+            
+            const trace = {
+                x: predictionRates,
+                y: outcomeRates,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'P(Outcome=Yes)',
+                line: { color: '#4facfe', width: 3 },
+                marker: { size: 8 }
+            };
+            
+            const layout = {
+                title: 'Prediction → Outcome Causality',
+                xaxis: { title: 'P(Predict=Yes)' },
+                yaxis: { title: 'P(Outcome=Yes)' },
+                showlegend: false,
+                margin: { t: 40, b: 40, l: 60, r: 40 }
+            };
+            
+            Plotly.newPlot('causality-plot', [trace], layout, {responsive: true});
+        }
+        
+        function updateBayesPlot() {
+            const prior = parseFloat(document.getElementById('prior-slider').value);
+            const evidence = parseFloat(document.getElementById('evidence-slider').value);
+            
+            // Bayesian update calculation
+            const likelihood1 = evidence;
+            const likelihood0 = 1 - evidence;
+            
+            const posterior = (likelihood1 * prior) / (likelihood1 * prior + likelihood0 * (1 - prior));
+            
+            const data = [{
+                x: ['Prior', 'Posterior'],
+                y: [prior, posterior],
+                type: 'bar',
+                marker: { color: ['#764ba2', '#4facfe'] }
+            }];
+            
+            const layout = {
+                title: 'Bayesian Update',
+                yaxis: { title: 'Probability', range: [0, 1] },
+                showlegend: false,
+                margin: { t: 40, b: 40, l: 60, r: 40 }
+            };
+            
+            Plotly.newPlot('bayes-plot', data, layout, {responsive: true});
+        }
+        
+        function updateUtilityPlot() {
+            const risk = parseFloat(document.getElementById('risk-slider').value);
+            const impact = parseFloat(document.getElementById('impact-slider').value);
+            
+            // Generate utility surface
+            const strategies = [];
+            const utilities = [];
+            
+            for (let s = 0; s <= 1; s += 0.1) {
+                strategies.push(s);
+                // Simplified utility: accuracy - risk penalty + market impact
+                const accuracy = 1 - Math.abs(s - 0.5) * 2; // Peak at 0.5
+                const riskPenalty = risk * s * s; // Quadratic risk
+                const marketBonus = impact * s * (1 - s); // Market impact bonus
+                utilities.push(accuracy - riskPenalty + marketBonus);
+            }
+            
+            const trace = {
+                x: strategies,
+                y: utilities,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Expected Utility',
+                line: { color: '#f093fb', width: 3 }
+            };
+            
+            const layout = {
+                title: 'Economic Utility Function',
+                xaxis: { title: 'Prediction Strategy' },
+                yaxis: { title: 'Expected Utility' },
+                showlegend: false,
+                margin: { t: 40, b: 40, l: 60, r: 40 }
+            };
+            
+            Plotly.newPlot('utility-plot', [trace], layout, {responsive: true});
+        }
+        
+        function updateBondingCurvePlot() {
+            const a = parseFloat(document.getElementById('slope-slider').value);
+            const b = parseFloat(document.getElementById('base-slider').value);
+            const currentSupply = parseFloat(document.getElementById('supply-slider').value);
+            
+            // Generate bonding curve data
+            const supplies = [];
+            const prices = [];
+            
+            for (let s = 0; s <= 500; s += 10) {
+                supplies.push(s);
+                prices.push(a * s + b);
+            }
+            
+            const trace1 = {
+                x: supplies,
+                y: prices,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Price Curve',
+                line: { color: '#667eea', width: 3 }
+            };
+            
+            // Current point
+            const currentPrice = a * currentSupply + b;
+            const trace2 = {
+                x: [currentSupply],
+                y: [currentPrice],
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Current Supply',
+                marker: { size: 15, color: '#f5576c' }
+            };
+            
+            const layout = {
+                title: 'P-Tok Bonding Curve',
+                xaxis: { title: 'Token Supply' },
+                yaxis: { title: 'Price ($)' },
+                showlegend: true,
+                margin: { t: 40, b: 40, l: 60, r: 40 }
+            };
+            
+            Plotly.newPlot('bonding-curve-plot', [trace1, trace2], layout, {responsive: true});
+            
+            // Update stats
+            const marketCap = (a * currentSupply * currentSupply / 2) + (b * currentSupply);
+            document.getElementById('current-price').textContent = currentPrice.toFixed(2);
+            document.getElementById('market-cap').textContent = marketCap.toFixed(2);
+        }
+        
+        function updateReflexivity() {
+            const p1 = parseFloat(document.getElementById('current-p1').textContent);
+            const p0 = parseFloat(document.getElementById('current-p0').textContent);
+            const reflexivity = p1 - p0;
+            document.getElementById('current-reflexivity').textContent = reflexivity.toFixed(2);
+        }
+        
+        function openCalculator() {
+            alert('📱 Parameter Calculator - Coming Soon!\n\nThis will include:\n• Nash Equilibrium Solver\n• Fixed Point Calculator\n• Stability Analysis\n• Sensitivity Analysis');
+        }
+        
+        function openSimulator() {
+            alert('🔬 Feedback Simulator - Coming Soon!\n\nThis will include:\n• Multi-agent Simulations\n• Time Series Evolution\n• Bifurcation Analysis\n• Market Crash Scenarios');
+        }
+        
+        function openTokenAnalyzer() {
+            alert('🪙 Token Analyzer - Coming Soon!\n\nThis will include:\n• Tokenomics Optimizer\n• Liquidity Analysis\n• Governance Simulator\n• DeFi Integration Models');
+        }
+        
+        // Initialize reflexivity on load
+        setTimeout(updateReflexivity, 100);
+    </script>
+</body>
+</html>

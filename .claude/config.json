@@ -1,0 +1,151 @@
+{
+  "version": "2.0",
+  "routing": {
+    "enabled": true,
+    "auto_detect": true,
+    "fallback_to_root": true
+  },
+  "session_management": {
+    "persistent_memory": true,
+    "context_switching": true,
+    "project_isolation": true,
+    "memory_limit_mb": 512
+  },
+  "subprojects": {
+    "numerai-pipeline": {
+      "path": "./numerai-pipeline",
+      "description": "ML prediction system with polyglot features",
+      "claude_config": ".claude/numerai.json",
+      "memory_namespace": "numerai_ml",
+      "context_priority": "high",
+      "specialized_tools": ["ml_training", "polyglot_features", "tournament_integration"],
+      "active": true
+    },
+    "phoenix-live": {
+      "path": "../phoenix-live", 
+      "description": "Elixir Phoenix LiveView applications",
+      "claude_config": ".claude/phoenix.json",
+      "memory_namespace": "phoenix_elixir",
+      "context_priority": "medium",
+      "specialized_tools": ["elixir_dev", "liveview", "genserver"],
+      "active": true
+    },
+    "numerai-haskell-tournament": {
+      "path": "../repositories/numerai-haskell-tournament",
+      "description": "Haskell-based tournament models",
+      "claude_config": ".claude/haskell.json", 
+      "memory_namespace": "haskell_numerai",
+      "context_priority": "medium",
+      "specialized_tools": ["haskell_dev", "cabal", "mathematical_modeling"],
+      "active": true
+    },
+    "performance-monitor-rs": {
+      "path": "../performance-monitor-rs",
+      "description": "Rust performance monitoring tools",
+      "claude_config": ".claude/rust.json",
+      "memory_namespace": "rust_performance",
+      "context_priority": "medium", 
+      "specialized_tools": ["rust_dev", "cargo", "performance_profiling"],
+      "active": true
+    },
+    "elixir-backtesting-engine": {
+      "path": "../elixir-backtesting-engine.uprootiny.dev",
+      "description": "Elixir backtesting and strategy evaluation",
+      "claude_config": ".claude/backtesting.json",
+      "memory_namespace": "elixir_backtesting",
+      "context_priority": "medium",
+      "specialized_tools": ["backtesting", "strategy_evaluation", "mix"],
+      "active": true
+    },
+    "substance": {
+      "path": "../substance",
+      "description": "Core utilities and shared libraries",
+      "claude_config": ".claude/substance.json",
+      "memory_namespace": "core_substance",
+      "context_priority": "low",
+      "specialized_tools": ["utilities", "shared_libs", "infrastructure"],
+      "active": true
+    },
+    "enhanced-docs-browser": {
+      "path": "../enhanced-docs-browser",
+      "description": "Documentation and knowledge management",
+      "claude_config": ".claude/docs.json",
+      "memory_namespace": "docs_browser",
+      "context_priority": "low",
+      "specialized_tools": ["documentation", "knowledge_mgmt", "search"],
+      "active": true
+    },
+    "pythia-tda-core": {
+      "path": "../../tmp/pythia-demo",
+      "description": "Python trading and analysis core",
+      "claude_config": ".claude/pythia.json",
+      "memory_namespace": "pythia_trading",
+      "context_priority": "high",
+      "specialized_tools": ["trading_analysis", "python_dev", "data_science"],
+      "active": true
+    },
+    "wedding-site": {
+      "path": "../eliot-wedding.hyperstitious.art",
+      "description": "Wedding website and event management", 
+      "claude_config": ".claude/wedding.json",
+      "memory_namespace": "wedding_site",
+      "context_priority": "low",
+      "specialized_tools": ["web_dev", "event_mgmt", "frontend"],
+      "active": true
+    }
+  },
+  "routing_rules": [
+    {
+      "pattern": "**/*numerai*",
+      "route_to": "numerai-pipeline",
+      "priority": 10
+    },
+    {
+      "pattern": "**/*.ex",
+      "route_to": "phoenix-live", 
+      "priority": 8
+    },
+    {
+      "pattern": "**/*.hs",
+      "route_to": "numerai-haskell-tournament",
+      "priority": 8
+    },
+    {
+      "pattern": "**/*.rs",
+      "route_to": "performance-monitor-rs",
+      "priority": 8
+    },
+    {
+      "pattern": "**/mix.exs",
+      "route_to": "elixir-backtesting-engine",
+      "priority": 7
+    },
+    {
+      "pattern": "**/Cargo.toml",
+      "route_to": "performance-monitor-rs",
+      "priority": 7
+    },
+    {
+      "pattern": "**/cabal.project",
+      "route_to": "numerai-haskell-tournament", 
+      "priority": 7
+    },
+    {
+      "pattern": "**/pythia*",
+      "route_to": "pythia-tda-core",
+      "priority": 9
+    },
+    {
+      "pattern": "**/wedding*",
+      "route_to": "wedding-site",
+      "priority": 5
+    }
+  ],
+  "global_settings": {
+    "default_tools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
+    "memory_persistence_days": 30,
+    "context_switching_delay_ms": 100,
+    "auto_backup_configs": true,
+    "log_routing_decisions": true
+  }
+}
