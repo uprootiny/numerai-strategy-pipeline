@@ -1,0 +1,104 @@
+{
+  "start_time": "2025-09-07T02:14:10.400344",
+  "topology": "star",
+  "nodes_deployed": 0,
+  "nodes_failed": 8,
+  "deployment_details": {
+    "coordinator-001": {
+      "success": false,
+      "role": "coordinator",
+      "host": "localhost",
+      "port": 9000,
+      "capabilities": [
+        "orchestration",
+        "health_monitoring",
+        "load_balancing"
+      ]
+    },
+    "ml-worker-001": {
+      "success": false,
+      "role": "ml_worker",
+      "host": "localhost",
+      "port": 9001,
+      "capabilities": [
+        "model_training",
+        "prediction_generation",
+        "cross_validation"
+      ]
+    },
+    "ml-worker-002": {
+      "success": false,
+      "role": "ml_worker",
+      "host": "localhost",
+      "port": 9002,
+      "capabilities": [
+        "model_training",
+        "prediction_generation",
+        "cross_validation"
+      ]
+    },
+    "ml-worker-003": {
+      "success": false,
+      "role": "ml_worker",
+      "host": "localhost",
+      "port": 9003,
+      "capabilities": [
+        "model_training",
+        "prediction_generation",
+        "cross_validation"
+      ]
+    },
+    "feature-worker-001": {
+      "success": false,
+      "role": "feature_worker",
+      "host": "localhost",
+      "port": 9004,
+      "capabilities": [
+        "polyglot_features",
+        "feature_engineering",
+        "data_preprocessing"
+      ]
+    },
+    "feature-worker-002": {
+      "success": false,
+      "role": "feature_worker",
+      "host": "localhost",
+      "port": 9005,
+      "capabilities": [
+        "polyglot_features",
+        "feature_engineering",
+        "data_preprocessing"
+      ]
+    },
+    "storage-001": {
+      "success": false,
+      "role": "storage",
+      "host": "localhost",
+      "port": 9006,
+      "capabilities": [
+        "model_persistence",
+        "data_storage",
+        "backup_recovery"
+      ]
+    },
+    "storage-002": {
+      "success": false,
+      "role": "storage",
+      "host": "localhost",
+      "port": 9007,
+      "capabilities": [
+        "model_persistence",
+        "data_storage",
+        "backup_recovery"
+      ]
+    }
+  },
+  "connectivity": {
+    "total_nodes": 0,
+    "reachable_nodes": 0,
+    "connectivity_matrix": {},
+    "health_status": {}
+  },
+  "end_time": "2025-09-07T02:14:34.892051",
+  "status": "partial"
+}
